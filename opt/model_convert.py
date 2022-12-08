@@ -114,4 +114,4 @@ dict['layer8.weight'] = dict.pop('classifier.6.weight')
 dict['layer8.bias'] = dict.pop('classifier.6.bias')
 
 
-torch.save(dict, 'src/vgg16-modify.pth')
+torch.save(dict, 'opt/vgg16-modify.pth')

@@ -33,7 +33,7 @@ num_sever = [3]
 # load model
 model = VGG16()
 model_dict = model.state_dict()
-model_dict.update(torch.load("src/vgg16-modify.pth"))
+model_dict.update(torch.load("opt/vgg16-modify.pth"))
 model.load_state_dict(model_dict)
 model.eval()
 
@@ -54,7 +54,7 @@ if torch.cuda.is_available():
 #         print('trans time ', trans_time)
 
 
-#         with open("src/imagenet_classes.txt", "r") as f:
+#         with open("opt/imagenet_classes.txt", "r") as f:
 #             categories = [s.strip() for s in f.readlines()]
 #         # Show top categories per image
 #         top5_prob, top5_catid = torch.topk(probabilities, 5)
@@ -75,7 +75,7 @@ if torch.cuda.is_available():
 #             print('infer time ', infer_time)
 #             print('trans time ', trans_time)
             
-#             with open("src/imagenet_classes.txt", "r") as f:
+#             with open("opt/imagenet_classes.txt", "r") as f:
 #                 categories = [s.strip() for s in f.readlines()]
 #             # Show top categories per image
 #             top5_prob, top5_catid = torch.topk(probabilities, 5)
@@ -99,7 +99,7 @@ for i in range(0,len(num_sever)):
             print("trans_rate ",trans_rate[j])
             print('infer time ', infer_time)
 
-            with open("src/imagenet_classes.txt", "r") as f:
+            with open("opt/imagenet_classes.txt", "r") as f:
                 categories = [s.strip() for s in f.readlines()]
             # Show top categories per image
             top5_prob, top5_catid = torch.topk(probabilities, 5)
@@ -123,7 +123,7 @@ for i in range(0,len(num_sever)):
             print("trans_rate ",trans_rate[j])
             print('infer time ', infer_time)
 
-            with open("src/imagenet_classes.txt", "r") as f:
+            with open("opt/imagenet_classes.txt", "r") as f:
                 categories = [s.strip() for s in f.readlines()]
             # Show top categories per image
             top5_prob, top5_catid = torch.topk(probabilities, 5)
