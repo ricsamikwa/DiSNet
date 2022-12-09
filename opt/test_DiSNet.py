@@ -11,7 +11,7 @@ from rf_vgg import ReceptiveFieldCalculator
 from rf_DiSNet import ReceptiveFieldCalculatorDiSNet
 from torchvision import transforms
 from models.model_vgg16 import VGG16
-from infer import opt_flp,opt_modnn,get_partiton_info,get_partiton_info_DiSNet
+from infer import opt_flp,opt_modnn, opt_DiSNet,get_partiton_info,get_partiton_info_DiSNet
 
 # load image
 filename = ("data/dog.jpg")
@@ -117,7 +117,7 @@ for i in range(0,len(num_sever)):
     # print(partition_input)
     with torch.no_grad():
         for j in range(0,len(trans_rate)):
-            output,infer_time = opt_modnn(input_batch, partition_input, trans_rate[j], model)
+            output,infer_time = opt_DiSNet(input_batch, partition_input, trans_rate[j], model)
             probabilities = torch.nn.functional.softmax(output[0], dim=0)
             # print(probabilities)
             print("trans_rate ",trans_rate[j])
