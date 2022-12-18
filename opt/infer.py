@@ -291,68 +291,6 @@ def opt_flp(in_img,trans_rate,num_sever,model):
     infer_time = infer_time + t_fls
     return infer_time,trans_time,in_tensor
 
-def opt_DiSNet(in_img, input_index, trans_rate, model):
-    # layers = 10
-    layers = 21 
-    # input size [s1,s2,h1,kernel_size]
-    # kerner_size = [3,3,2,3,3,2,3,3,3,2,3,3,3,2,3,3,3,2,0,0,0]
-    kerner_size = [3,3,2,3,3,2,3,3,3,2,3,3,3,2,3,2,2,2,0,0,0]
-
-    # Total inference time t_h: host inference time t_p: secondary ES inference time
-    t_CLs = 0
-    t_com = 0
-    t_FLs = 0
-    in_tensor = in_img
-    print(in_tensor.shape)
-    # print(input_index)
-    with torch.no_grad():
-        # Transmission Scheduling
-        for i in range(0,layers):
-            if i < layers-3:
-                out_tensor = []
-                t_sub = []
-                t_sub_com = []
-                # print(input_index[i][0])
-                for j in range(0,len(input_index[i][0])):
-                    if input_index[i][1][j] == 0:
-                        break
-                    in_sub = in_tensor[:,:,input_index[i][0][j][0]:input_index[i][0][j][1]+1,:]
-                    inputsize_sub = in_sub.size()
-                    
-                    t_sub_rec = 32*inputsize_sub[1]*inputsize_sub[2]*inputsize_sub[3]/(1024*1024*trans_rate)
-                    # print(in_sub)
-                    output_sub, t_sub_cmp = infer_layer(in_sub, model, i)
-                    
-                    outputsize_sub = output_sub.size()
-
-                    if kerner_size[i] == 3:
-                        if j not in [0,8]:
-                            t_sub_send = 32*outputsize_sub[1]*(outputsize_sub[2]-2)*outputsize_sub[3]/(1024*1024*1024*trans_rate)
-                            out_tensor.append(output_sub[:,:,1:-1,:])
-                        elif j == 0:
-                            out_tensor.append(output_sub[:,:,:-1,:])
-                            t_sub_send = 32*outputsize_sub[1]*(outputsize_sub[2]-1)*outputsize_sub[3]/(1024*1024*1024*trans_rate)
-                        else:
-                            out_tensor.append(output_sub[:,:,1:,:])
-                            t_sub_send = 32*outputsize_sub[1]*(outputsize_sub[2]-1)*outputsize_sub[3]/(1024*1024*1024*trans_rate)
-                    elif kerner_size[i] == 2:
-                        t_sub_send = 32*outputsize_sub[1]*outputsize_sub[2]*outputsize_sub[3]/(1024*1024*1024*trans_rate)
-                        out_tensor.append(output_sub)
-                    t_sub.append(t_sub_rec + t_sub_cmp + t_sub_send)
-                    t_sub_com.append(t_sub_rec + t_sub_send)
-                in_tensor = out_tensor[0]
-                for i in range(len(out_tensor)-1):
-                    in_tensor = torch.cat([in_tensor,out_tensor[i+1]],dim=2)
-                t_com = t_com + max(t_sub_com)
-                t_CLs = t_CLs + max(t_sub)
-            else:
-                output_tensor, t_fl = infer_layer(in_tensor, model, i)
-                in_tensor = output_tensor
-                t_FLs = t_FLs + t_fl
-        t = t_CLs + t_FLs
-        print("this is t", t)
-    return output_tensor, t
-
 def opt_modnn(in_img, input_index, trans_rate, model):
     # layers = 10
     layers = 21 
@@ -382,7 +320,8 @@ def opt_modnn(in_img, input_index, trans_rate, model):
                     inputsize_sub = in_sub.size()
                     
                     t_sub_rec = 32*inputsize_sub[1]*inputsize_sub[2]*inputsize_sub[3]/(1024*1024*trans_rate)
-                    # print(in_sub)
+                    print(in_sub.shape, i)
+
                     output_sub, t_sub_cmp = infer_layer(in_sub, model, i)
                     
                     outputsize_sub = output_sub.size()
@@ -409,9 +348,90 @@ def opt_modnn(in_img, input_index, trans_rate, model):
                 t_CLs = t_CLs + max(t_sub)
             else:
                 output_tensor, t_fl = infer_layer(in_tensor, model, i)
+                # print(output_tensor.shape)
+
                 in_tensor = output_tensor
                 t_FLs = t_FLs + t_fl
         t = t_CLs + t_FLs
         print("this is t", t)
     return output_tensor, t
+
+##################### workig here #######################
+def opt_DiSNet(in_img, layer_range, input_index, trans_rate, model):
+    # layers = 10
+    # layers = 21 
+    layers = layer_range[1]
+    if layer_range[1] == 18:
+        layers = 21  
+    layers_iter = layers - layer_range[0]
+
+    layers_start = layer_range[0]
+    # input size [s1,s2,h1,kernel_size]
+    # kerner_size = [3,3,2,3,3,2,3,3,3,2,3,3,3,2,3,3,3,2,0,0,0]
+    kerner_size = [3,3,2,3,3,2,3,3,3,2,3,3,3,2,3,2,2,2,0,0,0]
+
+    # Total inference time t_h: host inference time t_p: secondary ES inference time
+    t_CLs = 0
+    t_com = 0
+    t_FLs = 0
+    in_tensor = in_img
+    # print(in_tensor.shape)
+    # print(input_index)
+    # print(layers_start)
+
+    with torch.no_grad():
+        # Transmission Scheduling
+        for i in range(0,layers_iter):
+            p = layers_start + i
+            print(p)
+            if p < layers-3:
+                out_tensor = []
+                t_sub = []
+                t_sub_com = []
+                # print(i)
+                # print(input_index[i][0])
+                for j in range(0,len(input_index[i][0])):
+                    # print(input_index[i][1][j])
+                    if input_index[i][1][j] == 0:
+                        break
+                    # print(input_index[i][0][j][0],input_index[i][0][j][1]+1)
+                    in_sub = in_tensor[:,:,input_index[i][0][j][0]:input_index[i][0][j][1]+1,:]
+                    inputsize_sub = in_sub.size()
+                    
+                    t_sub_rec = 32*inputsize_sub[1]*inputsize_sub[2]*inputsize_sub[3]/(1024*1024*trans_rate)
+                    # print(in_sub.shape)
+                    output_sub, t_sub_cmp = infer_layer(in_sub, model, p)
+                    # print(output_sub.shape)
+                    outputsize_sub = output_sub.size()
+
+                    if kerner_size[p] == 3:
+                        if j not in [0,8]:
+                            t_sub_send = 32*outputsize_sub[1]*(outputsize_sub[2]-2)*outputsize_sub[3]/(1024*1024*1024*trans_rate)
+                            out_tensor.append(output_sub[:,:,1:-1,:])
+                        elif j == 0:
+                            out_tensor.append(output_sub[:,:,:-1,:])
+                            t_sub_send = 32*outputsize_sub[1]*(outputsize_sub[2]-1)*outputsize_sub[3]/(1024*1024*1024*trans_rate)
+                        else:
+                            out_tensor.append(output_sub[:,:,1:,:])
+                            t_sub_send = 32*outputsize_sub[1]*(outputsize_sub[2]-1)*outputsize_sub[3]/(1024*1024*1024*trans_rate)
+                    elif kerner_size[p] == 2:
+                        t_sub_send = 32*outputsize_sub[1]*outputsize_sub[2]*outputsize_sub[3]/(1024*1024*1024*trans_rate)
+                        out_tensor.append(output_sub)
+                    t_sub.append(t_sub_rec + t_sub_cmp + t_sub_send)
+                    t_sub_com.append(t_sub_rec + t_sub_send)
+                in_tensor = out_tensor[0]
+                for i in range(len(out_tensor)-1):
+                    in_tensor = torch.cat([in_tensor,out_tensor[i+1]],dim=2)
+                t_com = t_com + max(t_sub_com)
+                t_CLs = t_CLs + max(t_sub)
+            else:
+                output_tensor, t_fl = infer_layer(in_tensor, model, p)
+                # print(output_tensor.shape)
+
+                in_tensor = output_tensor
+                t_FLs = t_FLs + t_fl
+        t = t_CLs + t_FLs
+        print("this is t", t)
+    return output_tensor, t
+
 
