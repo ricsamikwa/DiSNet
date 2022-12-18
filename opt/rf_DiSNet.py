@@ -130,7 +130,7 @@ class ReceptiveFieldCalculatorDiSNet:
                 p[i] = [max(start_end[i][0]-int(r/2), 0), min(start_end[i][1]+int(r/2), originl_size-1)]
             if partition[i]==0:
                 p[i]= [0,0]
-        print(p,partition)
+        # print(p,partition)
         return p,partition
     
 # ReceptiveFieldCalculator()

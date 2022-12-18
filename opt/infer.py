@@ -303,7 +303,7 @@ def opt_modnn(in_img, input_index, trans_rate, model):
     t_com = 0
     t_FLs = 0
     in_tensor = in_img
-    print(in_tensor.shape)
+    # print(in_tensor.shape)
     # print(input_index)
     with torch.no_grad():
         # Transmission Scheduling
@@ -320,7 +320,7 @@ def opt_modnn(in_img, input_index, trans_rate, model):
                     inputsize_sub = in_sub.size()
                     
                     t_sub_rec = 32*inputsize_sub[1]*inputsize_sub[2]*inputsize_sub[3]/(1024*1024*trans_rate)
-                    print(in_sub.shape, i)
+                    # print(in_sub.shape, i)
 
                     output_sub, t_sub_cmp = infer_layer(in_sub, model, i)
                     
@@ -383,7 +383,7 @@ def opt_DiSNet(in_img, layer_range, input_index, trans_rate, model):
         # Transmission Scheduling
         for i in range(0,layers_iter):
             p = layers_start + i
-            print(p)
+            # print(p)
             if p < layers-3:
                 out_tensor = []
                 t_sub = []
@@ -431,7 +431,7 @@ def opt_DiSNet(in_img, layer_range, input_index, trans_rate, model):
                 in_tensor = output_tensor
                 t_FLs = t_FLs + t_fl
         t = t_CLs + t_FLs
-        print("this is t", t)
+        # print("this is t", t)
     return output_tensor, t
 
 
