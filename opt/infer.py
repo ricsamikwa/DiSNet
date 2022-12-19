@@ -399,12 +399,16 @@ def opt_DiSNet(in_img, layer_range, input_index, trans_rate, model):
                     inputsize_sub = in_sub.size()
                     
                     t_sub_rec = 32*inputsize_sub[1]*inputsize_sub[2]*inputsize_sub[3]/(1024*1024*trans_rate)
-                    # print(in_sub.shape)
+                    
+                    # say this is running on diffent devices at different speeds
                     output_sub, t_sub_cmp = infer_layer(in_sub, model, p)
                     # print(output_sub.shape)
                     outputsize_sub = output_sub.size()
+                    # print(outputsize_sub)
 
+                    #this ------- shit
                     if kerner_size[p] == 3:
+                        # problem ?
                         if j not in [0,8]:
                             t_sub_send = 32*outputsize_sub[1]*(outputsize_sub[2]-2)*outputsize_sub[3]/(1024*1024*1024*trans_rate)
                             out_tensor.append(output_sub[:,:,1:-1,:])
@@ -417,14 +421,17 @@ def opt_DiSNet(in_img, layer_range, input_index, trans_rate, model):
                     elif kerner_size[p] == 2:
                         t_sub_send = 32*outputsize_sub[1]*outputsize_sub[2]*outputsize_sub[3]/(1024*1024*1024*trans_rate)
                         out_tensor.append(output_sub)
+                    
+                    #this is per layer 
                     t_sub.append(t_sub_rec + t_sub_cmp + t_sub_send)
                     t_sub_com.append(t_sub_rec + t_sub_send)
                 in_tensor = out_tensor[0]
                 for i in range(len(out_tensor)-1):
                     in_tensor = torch.cat([in_tensor,out_tensor[i+1]],dim=2)
-                t_com = t_com + max(t_sub_com)
-                t_CLs = t_CLs + max(t_sub)
+                t_com = t_com + max(t_sub_com) # max of the data exchange time for each layer (send and receiving) - not used 
+                t_CLs = t_CLs + max(t_sub) # max of the processing time
             else:
+                #last layers on the last device 
                 output_tensor, t_fl = infer_layer(in_tensor, model, p)
                 # print(output_tensor.shape)
 

@@ -12,6 +12,7 @@ from rf_DiSNet import ReceptiveFieldCalculatorDiSNet
 from torchvision import transforms
 from models.model_vgg16 import VGG16
 from infer import opt_flp,opt_modnn, opt_DiSNet,get_partiton_info,get_partiton_info_DiSNet
+from utils import trans_time_forward
 
 # load image
 filename = ("data/dog.jpg")
@@ -126,6 +127,7 @@ for i in range(0,len(num_sever)):
 
     output = input_batch
     infer_time = []
+    trans_time_seq = []
     with torch.no_grad():
         for j in range(0,len(trans_rate)):
 
@@ -133,12 +135,15 @@ for i in range(0,len(num_sever)):
             output,sub_infer_time = opt_DiSNet(output, layer_range[j], partition_input[layer_range[j,0]:layer_range[j,1]], trans_rate[j], model)
             # print("Output",output.shape)
             # print(probabilities)
+            fowrd_trans_time = trans_time_forward(output, trans_rate[j],layer_range[j])
+            trans_time_seq.append(fowrd_trans_time)
+            print('trans time forward ', fowrd_trans_time)
             print("sub trans_rate ",trans_rate[j])
             print('sub infer time ', sub_infer_time)
             infer_time.append(sub_infer_time)
             print("--------------------------------------------------------")
                     
-        print('End to end inference time ', np.sum(infer_time))
+        print('End to end inference time ', np.sum(infer_time)+ np.sum(trans_time_seq))
         print("--------------------------------------------------------")
 
         probabilities = torch.nn.functional.softmax(output[0], dim=0)
