@@ -27,7 +27,7 @@ input_tensor = preprocess(input_image)
 input_batch = input_tensor.unsqueeze(0)
 
 # setup parameters
-trans_rate = [40, 60, 80, 100] # Gbps
+trans_rate = [4, 6, 8, 10] # Gbps
 # num_sever = [3,4,5,6,7,8,9,10]
 num_sever = [3]
 
@@ -115,15 +115,24 @@ for i in range(0,len(num_sever)):
 for i in range(0,len(num_sever)):
     partition_input = []
     layer_range = []
+    par_split = [4,3,2]
+    split_ratio = [[1,2,1,3],[3,1,2],[2,1]]
+
     for m in range(0,18):
-        
-        partition = get_partiton_info_DiSNet(m,m,num_sever[i]) #how to split each layer
+        if m < 7:
+            cut = 0
+        elif m < 15 & m <= 6:
+            cut = 1
+        else:
+            cut = 2
+        partition = get_partiton_info_DiSNet(m,m,par_split[cut],split_ratio[cut]) #how to split each layer
         partition_input.append(partition)
     #     print(partition)
 
-    layer_range = np.array([[0,3],[3,7],[7,10],[10,15],[15,18]])
+    layer_range = np.array([[0,3],[3,7],[7,10],[10,15],[15,18]]) # Vertical partitioning
     # print(partition_input)
-    trans_rate = [40, 60, 80, 100, 120] # Gbps
+    trans_rate = [4, 6, 8, 10, 12] # Gbps for devices 0 to 5
+    comp_rate = [[1,2,1,2],[3,1,2,1],[4,7,1],[1,1.5,2],[1,3,2]] # how best to represent this part?
 
     output = input_batch
     infer_time = []
@@ -132,7 +141,7 @@ for i in range(0,len(num_sever)):
         for j in range(0,len(trans_rate)):
 
             print(partition_input[layer_range[j,0]:layer_range[j,1]])
-            output,sub_infer_time = opt_DiSNet(output, layer_range[j], partition_input[layer_range[j,0]:layer_range[j,1]], trans_rate[j], model)
+            output,sub_infer_time = opt_DiSNet(output, layer_range[j], partition_input[layer_range[j,0]:layer_range[j,1]], trans_rate[j],comp_rate[j], model)
             # print("Output",output.shape)
             # print(probabilities)
             fowrd_trans_time = trans_time_forward(output, trans_rate[j],layer_range[j])

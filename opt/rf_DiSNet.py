@@ -24,13 +24,14 @@ vgg16 = {
 
 
 class ReceptiveFieldCalculatorDiSNet:
-    def __init__(self, input_image_size, input_num, output_num, partition_num): #img, start layer, end layer, number of partitions
+    def __init__(self, input_image_size, input_num, output_num, partition_num, split_ratio): #img, start layer, end layer, number of partitions
         super(ReceptiveFieldCalculatorDiSNet, self).__init__()
         self.architecture = vgg16
         self.input_image_size = input_image_size
         self.input_num = input_num
         self.output_num = output_num
         self.partition_num = partition_num
+        self.split_ratio = split_ratio
         self.out = ()
         self.i = ()
         layer = -1 #initialising layer to no feasible layer
@@ -89,8 +90,8 @@ class ReceptiveFieldCalculatorDiSNet:
     def calculate_overlapped_data(self):
 
         #horizontal split ratio
-        split_ratio = [2,3,5]
-        self.partition_num = 3 #this is temporary
+        split_ratio = self.split_ratio
+        # self.partition_num = 3 #this is temporary
 
         originl_size = self.i[1]
         out_size = self.out[1]

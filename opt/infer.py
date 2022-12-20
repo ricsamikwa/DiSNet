@@ -9,6 +9,8 @@ from rf_DiSNet import ReceptiveFieldCalculatorDiSNet
 o_path = os.getcwd()
 sys.path.append(o_path)
 
+DEVICE_PACE_RATE = 5
+
 def infer_block(in_tensor, start_layer, end_layer, model):
     cmp_time = []
     out_tesor = []
@@ -50,9 +52,9 @@ def get_partiton_info(start_layer, end_layer, par_num):
     partition = calculator.input
     return partition
 
-def get_partiton_info_DiSNet(start_layer, end_layer, par_num):
+def get_partiton_info_DiSNet(start_layer, end_layer, par_num, split_ratio):
     # print(start_layer, end_layer, par_num)
-    calculator = ReceptiveFieldCalculatorDiSNet(224, start_layer, end_layer, par_num)
+    calculator = ReceptiveFieldCalculatorDiSNet(224, start_layer, end_layer, par_num, split_ratio)
     partition = calculator.input
     # print(partition)
     return partition
@@ -319,7 +321,7 @@ def opt_modnn(in_img, input_index, trans_rate, model):
                     in_sub = in_tensor[:,:,input_index[i][0][j][0]:input_index[i][0][j][1]+1,:]
                     inputsize_sub = in_sub.size()
                     
-                    t_sub_rec = 32*inputsize_sub[1]*inputsize_sub[2]*inputsize_sub[3]/(1024*1024*trans_rate)
+                    t_sub_rec = 32*inputsize_sub[1]*inputsize_sub[2]*inputsize_sub[3]/(1024*1024*1024*trans_rate)
                     # print(in_sub.shape, i)
 
                     output_sub, t_sub_cmp = infer_layer(in_sub, model, i)
@@ -357,9 +359,10 @@ def opt_modnn(in_img, input_index, trans_rate, model):
     return output_tensor, t
 
 ##################### workig here #######################
-def opt_DiSNet(in_img, layer_range, input_index, trans_rate, model):
+def opt_DiSNet(in_img, layer_range, input_index, trans_rate, comp_rate, model):
     # layers = 10
     # layers = 21 
+    
     layers = layer_range[1]
     if layer_range[1] == 18:
         layers = 21  
@@ -398,7 +401,7 @@ def opt_DiSNet(in_img, layer_range, input_index, trans_rate, model):
                     in_sub = in_tensor[:,:,input_index[i][0][j][0]:input_index[i][0][j][1]+1,:]
                     inputsize_sub = in_sub.size()
                     
-                    t_sub_rec = 32*inputsize_sub[1]*inputsize_sub[2]*inputsize_sub[3]/(1024*1024*trans_rate)
+                    t_sub_rec = 32*inputsize_sub[1]*inputsize_sub[2]*inputsize_sub[3]/(1024*1024*1024*trans_rate)
                     
                     # say this is running on diffent devices at different speeds
                     output_sub, t_sub_cmp = infer_layer(in_sub, model, p)
@@ -423,7 +426,9 @@ def opt_DiSNet(in_img, layer_range, input_index, trans_rate, model):
                         out_tensor.append(output_sub)
                     
                     #this is per layer 
-                    t_sub.append(t_sub_rec + t_sub_cmp + t_sub_send)
+                    t_sub_cmp_proportional = (1 - (comp_rate[j]/sum(comp_rate)))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
+                    # print(t_sub_cmp_proportional, t_sub_cmp, t_sub_rec, t_sub_send) # more checks later
+                    t_sub.append(t_sub_rec + t_sub_cmp_proportional + t_sub_send)
                     t_sub_com.append(t_sub_rec + t_sub_send)
                 in_tensor = out_tensor[0]
                 for i in range(len(out_tensor)-1):
