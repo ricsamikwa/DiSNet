@@ -9,7 +9,7 @@ from rf_DiSNet import ReceptiveFieldCalculatorDiSNet
 o_path = os.getcwd()
 sys.path.append(o_path)
 
-DEVICE_PACE_RATE = 5
+DEVICE_PACE_RATE = 1
 
 def infer_block(in_tensor, start_layer, end_layer, model):
     cmp_time = []
@@ -428,7 +428,9 @@ def opt_DiSNet(in_img, layer_range, input_index, trans_rate, comp_rate, model):
                     #this is per layer 
                     t_sub_cmp_proportional = (1 - (comp_rate[j]/sum(comp_rate)))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
                     # print(t_sub_cmp_proportional, t_sub_cmp, t_sub_rec, t_sub_send) # more checks later
+                    # t_sub.append(t_sub_rec + t_sub_cmp + t_sub_send)
                     t_sub.append(t_sub_rec + t_sub_cmp_proportional + t_sub_send)
+
                     t_sub_com.append(t_sub_rec + t_sub_send)
                 in_tensor = out_tensor[0]
                 for i in range(len(out_tensor)-1):

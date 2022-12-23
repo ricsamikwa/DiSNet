@@ -12,7 +12,7 @@ from rf_DiSNet import ReceptiveFieldCalculatorDiSNet
 from torchvision import transforms
 from models.model_vgg16 import VGG16
 from infer import opt_flp,opt_modnn, opt_DiSNet,get_partiton_info,get_partiton_info_DiSNet
-from utils import trans_time_forward
+from utils import trans_time_forward, create_resources_graph
 
 # load image
 filename = ("data/dog.jpg")
@@ -111,28 +111,41 @@ for i in range(0,len(num_sever)):
                 print(categories[top5_catid[k]], top5_prob[k].item()) 
             print("--------------------------------------------------------")
 
+num_clusters = 1
 # inference DiSNet
-for i in range(0,len(num_sever)):
+for i in range(0,num_clusters):
     partition_input = []
     layer_range = []
     par_split = [4,3,2]
-    split_ratio = [[1,2,1,3],[3,1,2],[2,1]]
+    split_ratio = [[1,2,1,3],[7,5,4],[2,1]]
+
+    #===============
+
+    # comp_rate = []
+    # vertices_no = 4
+    # list_comp_rates = [1.3, 2, 3.3]
+    # list_trans_rate = [4,3,10,8]
+    # resources, comp_rate = create_resources_graph(vertices_no,list_comp_rates,list_trans_rate)
+    # print(comp_rate)
+
+    #================
 
     for m in range(0,18):
         if m < 7:
             cut = 0
-        elif m < 15 & m <= 6:
+        elif m < 15 & m >= 6:
             cut = 1
         else:
             cut = 2
+        cut = 1
         partition = get_partiton_info_DiSNet(m,m,par_split[cut],split_ratio[cut]) #how to split each layer
         partition_input.append(partition)
     #     print(partition)
 
     layer_range = np.array([[0,3],[3,7],[7,10],[10,15],[15,18]]) # Vertical partitioning
     # print(partition_input)
-    trans_rate = [4, 6, 8, 10, 12] # Gbps for devices 0 to 5
-    comp_rate = [[1,2,1,2],[3,1,2,1],[4,7,1],[1,1.5,2],[1,3,2]] # how best to represent this part?
+    trans_rate = [12, 10, 8, 6, 4] # Gbps for devices 0 to 5
+    comp_rate = [[1,2,1,2],[3,1,2,1],[1,2,8],[1,1.5,2],[1,3,2]] # how best to represent this part?
 
     output = input_batch
     infer_time = []
@@ -141,10 +154,11 @@ for i in range(0,len(num_sever)):
         for j in range(0,len(trans_rate)):
 
             print(partition_input[layer_range[j,0]:layer_range[j,1]])
-            output,sub_infer_time = opt_DiSNet(output, layer_range[j], partition_input[layer_range[j,0]:layer_range[j,1]], trans_rate[j],comp_rate[j], model)
+            output,sub_infer_time = opt_DiSNet(output, layer_range[j], partition_input[layer_range[j,0]:layer_range[j,1]], trans_rate[j],comp_rate[2], model)
             # print("Output",output.shape)
             # print(probabilities)
             fowrd_trans_time = trans_time_forward(output, trans_rate[j],layer_range[j])
+            fowrd_trans_time = 0
             trans_time_seq.append(fowrd_trans_time)
             print('trans time forward ', fowrd_trans_time)
             print("sub trans_rate ",trans_rate[j])
