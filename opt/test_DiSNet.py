@@ -27,7 +27,7 @@ input_tensor = preprocess(input_image)
 input_batch = input_tensor.unsqueeze(0)
 
 # setup parameters
-trans_rate = [4, 6, 8, 10] # Gbps
+trans_rate = [40, 40, 40, 40] # Mbps
 # num_sever = [3,4,5,6,7,8,9,10]
 num_sever = [3]
 
@@ -117,7 +117,7 @@ for i in range(0,num_clusters):
     partition_input = []
     layer_range = []
     par_split = [4,3,2]
-    split_ratio = [[1,2,1,3],[7,5,4],[2,1]]
+    split_ratio = [[1,2,1,1],[7,2,2],[2,1]]
 
     #===============
 
@@ -137,15 +137,15 @@ for i in range(0,num_clusters):
             cut = 1
         else:
             cut = 2
-        cut = 1
+        # cut = 1
         partition = get_partiton_info_DiSNet(m,m,par_split[cut],split_ratio[cut]) #how to split each layer
         partition_input.append(partition)
     #     print(partition)
 
-    layer_range = np.array([[0,3],[3,7],[7,10],[10,15],[15,18]]) # Vertical partitioning
+    layer_range = np.array([[0,3],[3,7],[7,13],[13,15],[15,18]]) # Vertical partitioning
     # print(partition_input)
-    trans_rate = [12, 10, 8, 6, 4] # Gbps for devices 0 to 5
-    comp_rate = [[1,2,1,2],[3,1,2,1],[1,2,8],[1,1.5,2],[1,3,2]] # how best to represent this part?
+    trans_rate = [40, 40, 40, 40, 40] # Mbps for devices 0 to 5
+    comp_rate = [[1,2,1,1],[1,2,1,1],[10,1,1],[1,1.5,1],[2,1]] # how best to represent this part?
 
     output = input_batch
     infer_time = []
@@ -154,11 +154,11 @@ for i in range(0,num_clusters):
         for j in range(0,len(trans_rate)):
 
             print(partition_input[layer_range[j,0]:layer_range[j,1]])
-            output,sub_infer_time = opt_DiSNet(output, layer_range[j], partition_input[layer_range[j,0]:layer_range[j,1]], trans_rate[j],comp_rate[2], model)
+            output,sub_infer_time = opt_DiSNet(output, layer_range[j], partition_input[layer_range[j,0]:layer_range[j,1]], trans_rate[j],comp_rate[j], model)
             # print("Output",output.shape)
             # print(probabilities)
             fowrd_trans_time = trans_time_forward(output, trans_rate[j],layer_range[j])
-            fowrd_trans_time = 0
+            # fowrd_trans_time = 0
             trans_time_seq.append(fowrd_trans_time)
             print('trans time forward ', fowrd_trans_time)
             print("sub trans_rate ",trans_rate[j])
