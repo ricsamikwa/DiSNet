@@ -11,8 +11,13 @@ from rf_vgg import ReceptiveFieldCalculator
 from rf_DiSNet import ReceptiveFieldCalculatorDiSNet
 from torchvision import transforms
 from models.model_vgg16 import VGG16
-from infer import opt_flp,opt_modnn, opt_DiSNet,get_partiton_info,get_partiton_info_DiSNet
-from utils import trans_time_forward, create_resources_graph
+from infer import *
+from utils import trans_time_forward
+from network import *
+# import networkx as nx
+# import matplotlib.pyplot as plt
+
+
 
 # load image
 filename = ("data/dog.jpg")
@@ -37,6 +42,7 @@ model_dict = model.state_dict()
 model_dict.update(torch.load("opt/vgg16-modify.pth"))
 model.load_state_dict(model_dict)
 model.eval()
+
 
 if torch.cuda.is_available():
     input_batch = input_batch.to('cuda:0')
@@ -85,34 +91,55 @@ if torch.cuda.is_available():
 #             print("--------------------------------------------------------")            
 
 # inference modnn
-for i in range(0,len(num_sever)):
-    partition_input = []
-    for m in range(0,18):
-        partition = get_partiton_info(m,m,num_sever[i]) #how to split each layer
-        partition_input.append(partition)
-    #     print(partition)
-    # print(partition_input)
-    with torch.no_grad():
-        for j in range(0,len(trans_rate)):
-            output,infer_time = opt_modnn(input_batch, partition_input, trans_rate[j], model)
-            probabilities = torch.nn.functional.softmax(output[0], dim=0)
-            # print(probabilities)
-            print("trans_rate ",trans_rate[j])
-            print("--------------------------------------------------------")
-            print('infer time ', infer_time)
-            print("--------------------------------------------------------")
+# for i in range(0,len(num_sever)):
+#     partition_input = []
+#     for m in range(0,18):
+#         partition = get_partiton_info(m,m,num_sever[i]) #how to split each layer
+#         partition_input.append(partition)
+#     #     print(partition)
+#     # print(partition_input)
+#     with torch.no_grad():
+#         for j in range(0,len(trans_rate)):
+#             output,infer_time = opt_modnn(input_batch, partition_input, trans_rate[j], model)
+#             probabilities = torch.nn.functional.softmax(output[0], dim=0)
+#             # print(probabilities)
+#             print("trans_rate ",trans_rate[j])
+#             print("--------------------------------------------------------")
+#             print('infer time ', infer_time)
+#             print("--------------------------------------------------------")
 
 
-            with open("opt/imagenet_classes.txt", "r") as f:
-                categories = [s.strip() for s in f.readlines()]
-            # Show top categories per image
-            top5_prob, top5_catid = torch.topk(probabilities, 5)
-            for k in range(top5_prob.size(0)):
-                print(categories[top5_catid[k]], top5_prob[k].item()) 
-            print("--------------------------------------------------------")
-
+#             with open("opt/imagenet_classes.txt", "r") as f:
+#                 categories = [s.strip() for s in f.readlines()]
+#             # Show top categories per image
+#             top5_prob, top5_catid = torch.topk(probabilities, 5)
+#             for k in range(top5_prob.size(0)):
+#                 print(categories[top5_catid[k]], top5_prob[k].item()) 
+#             print("--------------------------------------------------------")
+def take_second(elem):
+    return elem[1]
 num_clusters = 1
 # inference DiSNet
+"""
+max possible (gainful) parallelisable parts in integers [eg. layer 1 - 4: 5, layer 5 - 7: 4, ... , 1]
+get the longest path (more resources - longest path with less nodes) 
+for each device in the path 
+    get the neighbourhood resources info
+at the current (max) parallelisable block
+    get the subset (subset number = parallel blocks, ) of the neighbours with max possible resources
+when at start node
+    if the cost of transferring to the neighbours with max possible resources plus execution is better than the current neighbourhood
+    move and start there
+for the rest repeat
+    at the current neighbours find a subset for the next (max) parallelisable block
+    for the remaining neighbours in the path 
+        find the neighbourhood with max possible resources
+    if the cost of transferring to the neighbours with max possible resources plus execution is better than the current neighbourhood
+    move and start there
+for the last layer 
+    check the remaining path
+    execute it on the device with the highers resources 
+"""
 for i in range(0,num_clusters):
     partition_input = []
     layer_range = []
@@ -121,13 +148,43 @@ for i in range(0,num_clusters):
 
     #===============
 
-    # comp_rate = []
-    # vertices_no = 4
-    # list_comp_rates = [1.3, 2, 3.3]
-    # list_trans_rate = [4,3,10,8]
-    # resources, comp_rate = create_resources_graph(vertices_no,list_comp_rates,list_trans_rate)
-    # print(comp_rate)
+    temp_split_ratio = []
+    temp_trans_rate = []
+    other_temp = []
+    # generate a random graph with 10 nodes and 15 edges
+    G = generate_random_graph(10, 15)
+    draw_graph(G)
+    # x = [[G.nodes[n]['weight'] ,G[2][n]['weight'] ] for n in G.neighbors(2)]
+    print(all_paths_with_weights(G, 0, 5))
+    # # print(longest_path(G, 0, 9))
+    print(shortest_path(G, 0, 5))
 
+    path = shortest_path(G, 0, 5)
+    for p in path:
+        horizontal_split = []
+        trans_rate_split = []
+        temp = []
+        
+        for n in G.neighbors(p):
+            # print(n, p, [G.nodes[n]['weight'],G[p][n]['weight']])
+            # if n != p:
+            #do the checks here
+            
+            horizontal_split.append( G.nodes[n]['weight'])
+            trans_rate_split.append( G[p][n]['weight'])
+            
+            temp.append([n, G[p][n]['weight']])
+        horizontal_split.append(G.nodes[p]['weight'])
+        # trans_rate_split.append(G[p][n]['weight'])
+
+        temp_split_ratio.append(horizontal_split)
+        temp_trans_rate.append(trans_rate_split)
+        sorted_list = sorted(temp, key=take_second)
+        
+        other_temp.append(sorted_list)
+    print(temp_split_ratio)
+    print(temp_trans_rate)
+    print(other_temp)
     #================
 
     for m in range(0,18):
@@ -147,32 +204,32 @@ for i in range(0,num_clusters):
     trans_rate = [40, 40, 40, 40, 40] # Mbps for devices 0 to 5
     comp_rate = [[1,2,1,1],[1,2,1,1],[10,1,1],[1,1.5,1],[2,1]] # how best to represent this part?
 
-    output = input_batch
-    infer_time = []
-    trans_time_seq = []
-    with torch.no_grad():
-        for j in range(0,len(trans_rate)):
+    # output = input_batch
+    # infer_time = []
+    # trans_time_seq = []
+    # with torch.no_grad():
+    #     for j in range(0,len(trans_rate)):
 
-            print(partition_input[layer_range[j,0]:layer_range[j,1]])
-            output,sub_infer_time = opt_DiSNet(output, layer_range[j], partition_input[layer_range[j,0]:layer_range[j,1]], trans_rate[j],comp_rate[j], model)
-            # print("Output",output.shape)
-            # print(probabilities)
-            fowrd_trans_time = trans_time_forward(output, trans_rate[j],layer_range[j])
-            # fowrd_trans_time = 0
-            trans_time_seq.append(fowrd_trans_time)
-            print('trans time forward ', fowrd_trans_time)
-            print("sub trans_rate ",trans_rate[j])
-            print('sub infer time ', sub_infer_time)
-            infer_time.append(sub_infer_time)
-            print("--------------------------------------------------------")
+    #         print(partition_input[layer_range[j,0]:layer_range[j,1]])
+    #         output,sub_infer_time = opt_DiSNet(output, layer_range[j], partition_input[layer_range[j,0]:layer_range[j,1]], trans_rate[j],comp_rate[j], model)
+    #         # print("Output",output.shape)
+    #         # print(probabilities)
+    #         fowrd_trans_time = trans_time_forward(output, trans_rate[j],layer_range[j])
+    #         # fowrd_trans_time = 0
+    #         trans_time_seq.append(fowrd_trans_time)
+    #         print('trans time forward ', fowrd_trans_time)
+    #         print("sub trans_rate ",trans_rate[j])
+    #         print('sub infer time ', sub_infer_time)
+    #         infer_time.append(sub_infer_time)
+    #         print("--------------------------------------------------------")
                     
-        print('End to end inference time ', np.sum(infer_time)+ np.sum(trans_time_seq))
-        print("--------------------------------------------------------")
+    #     print('End to end inference time ', np.sum(infer_time)+ np.sum(trans_time_seq))
+    #     print("--------------------------------------------------------")
 
-        probabilities = torch.nn.functional.softmax(output[0], dim=0)
-        with open("opt/imagenet_classes.txt", "r") as f:
-            categories = [s.strip() for s in f.readlines()]
-        # Show top categories per image
-        top5_prob, top5_catid = torch.topk(probabilities, 5)
-        for k in range(top5_prob.size(0)):
-            print(categories[top5_catid[k]], top5_prob[k].item()) 
+    #     probabilities = torch.nn.functional.softmax(output[0], dim=0)
+    #     with open("opt/imagenet_classes.txt", "r") as f:
+    #         categories = [s.strip() for s in f.readlines()]
+    #     # Show top categories per image
+    #     top5_prob, top5_catid = torch.topk(probabilities, 5)
+    #     for k in range(top5_prob.size(0)):
+    #         print(categories[top5_catid[k]], top5_prob[k].item()) 
