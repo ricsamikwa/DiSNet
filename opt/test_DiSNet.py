@@ -12,10 +12,9 @@ from rf_DiSNet import ReceptiveFieldCalculatorDiSNet
 from torchvision import transforms
 from models.model_vgg16 import VGG16
 from infer import *
-from utils import trans_time_forward
+from utils import *
 from network import *
-# import networkx as nx
-# import matplotlib.pyplot as plt
+import configurations
 
 
 
@@ -118,11 +117,12 @@ if torch.cuda.is_available():
 #             print("--------------------------------------------------------")
 def take_second(elem):
     return elem[1]
-num_clusters = 1
-# inference DiSNet
+num_edge_clusters = 1
+# inference DiSNet *** 
 """
 max possible (gainful) parallelisable parts in integers [eg. layer 1 - 4: 5, layer 5 - 7: 4, ... , 1]
-get the longest path (more resources - longest path with less nodes) 
+get the suitable path (more resources - longest path with less nodes) 
+    - amortized cost of the path - path with highest average - uniform contribution for transmission and  comp rate e.g /5 
 for each device in the path 
     get the neighbourhood resources info
 at the current (max) parallelisable block
@@ -140,51 +140,76 @@ for the last layer
     check the remaining path
     execute it on the device with the highers resources 
 """
-for i in range(0,num_clusters):
+
+for i in range(0,num_edge_clusters):
+
+    ####### updates
+
+    # max parallelisable partitions in integers [1-4:5, 5-9:4, 10-14:3, 14-18:2]
+    max_par_partitions = configurations.max_par_partitions 
+
+     # generate mesh network graph with 10 devices and 15 connections with random resources and transmission throughput
+    G = generate_random_graph(10, 15)
+    draw_graph(G)
+
+    #different nodes
+    while True:
+        input_node = random.randint(0, 9)
+        output_node = random.randint(0, 9)
+        if input_node != output_node:
+            break
+    
+    
+    print(all_paths_with_weights(G, input_node, output_node))
+
+    selected_path = select_path(G, input_node, output_node)
+    print('selected path:', selected_path)
+
+    current_point_on_path = 0
+    split_ratio = []
+    devices = []
+
+    for i in range(0, len(max_par_partitions)):
+
+        current_max_par_partitions = max_par_partitions[i]
+
+        ### check here if there is a better neighbourhood <---> and update current_point_on_path
+        # current_point_on_path = determine_point_on_path(G, current_max_par_partitions, current_point_on_path)
+        
+        #######################
+
+        p = selected_path[current_point_on_path]
+    
+        current_neighbours = []
+        for n in G.neighbors(p):
+            current_neighbours.append([n, G.nodes[n]['weight']])
+        current_neighbours.append([p, G.nodes[p]['weight']])
+        # print(current_neighbours, len(current_neighbours))
+
+        if len(current_neighbours) < current_max_par_partitions:
+            current_max_par_partitions = len(current_neighbours)
+            horizontal_split_ratio, device = find_split_ratio(current_neighbours)
+            split_ratio.append(horizontal_split_ratio)
+            devices.append(device)
+        else:
+            #select a subset
+            subset_current_neighbours = select_subset(current_neighbours, current_max_par_partitions)
+            horizontal_split_ratio, device = find_split_ratio(subset_current_neighbours)
+            split_ratio.append(horizontal_split_ratio)
+            devices.append(device)
+        
+        ### this can go
+        current_point_on_path = current_point_on_path+1
+
+    print(split_ratio)
+    print(devices)
+    ##########
+
     partition_input = []
     layer_range = []
     par_split = [4,3,2]
     split_ratio = [[1,2,1,1],[7,2,2],[2,1]]
-
-    #===============
-
-    temp_split_ratio = []
-    temp_trans_rate = []
-    other_temp = []
-    # generate a random graph with 10 nodes and 15 edges
-    G = generate_random_graph(10, 15)
-    draw_graph(G)
-    # x = [[G.nodes[n]['weight'] ,G[2][n]['weight'] ] for n in G.neighbors(2)]
-    print(all_paths_with_weights(G, 0, 5))
-    # # print(longest_path(G, 0, 9))
-    print(shortest_path(G, 0, 5))
-
-    path = shortest_path(G, 0, 5)
-    for p in path:
-        horizontal_split = []
-        trans_rate_split = []
-        temp = []
-        
-        for n in G.neighbors(p):
-            # print(n, p, [G.nodes[n]['weight'],G[p][n]['weight']])
-            # if n != p:
-            #do the checks here
-            
-            horizontal_split.append( G.nodes[n]['weight'])
-            trans_rate_split.append( G[p][n]['weight'])
-            
-            temp.append([n, G[p][n]['weight']])
-        horizontal_split.append(G.nodes[p]['weight'])
-        # trans_rate_split.append(G[p][n]['weight'])
-
-        temp_split_ratio.append(horizontal_split)
-        temp_trans_rate.append(trans_rate_split)
-        sorted_list = sorted(temp, key=take_second)
-        
-        other_temp.append(sorted_list)
-    print(temp_split_ratio)
-    print(temp_trans_rate)
-    print(other_temp)
+    
     #================
 
     for m in range(0,18):
@@ -204,32 +229,32 @@ for i in range(0,num_clusters):
     trans_rate = [40, 40, 40, 40, 40] # Mbps for devices 0 to 5
     comp_rate = [[1,2,1,1],[1,2,1,1],[10,1,1],[1,1.5,1],[2,1]] # how best to represent this part?
 
-    # output = input_batch
-    # infer_time = []
-    # trans_time_seq = []
-    # with torch.no_grad():
-    #     for j in range(0,len(trans_rate)):
+    output = input_batch
+    infer_time = []
+    trans_time_seq = []
+    with torch.no_grad():
+        for j in range(0,len(trans_rate)):
 
-    #         print(partition_input[layer_range[j,0]:layer_range[j,1]])
-    #         output,sub_infer_time = opt_DiSNet(output, layer_range[j], partition_input[layer_range[j,0]:layer_range[j,1]], trans_rate[j],comp_rate[j], model)
-    #         # print("Output",output.shape)
-    #         # print(probabilities)
-    #         fowrd_trans_time = trans_time_forward(output, trans_rate[j],layer_range[j])
-    #         # fowrd_trans_time = 0
-    #         trans_time_seq.append(fowrd_trans_time)
-    #         print('trans time forward ', fowrd_trans_time)
-    #         print("sub trans_rate ",trans_rate[j])
-    #         print('sub infer time ', sub_infer_time)
-    #         infer_time.append(sub_infer_time)
-    #         print("--------------------------------------------------------")
+            print(partition_input[layer_range[j,0]:layer_range[j,1]])
+            output,sub_infer_time = opt_DiSNet(output, layer_range[j], partition_input[layer_range[j,0]:layer_range[j,1]], trans_rate[j],comp_rate[j], model)
+            # print("Output",output.shape)
+            # print(probabilities)
+            fowrd_trans_time = trans_time_forward(output, trans_rate[j],layer_range[j])
+            # fowrd_trans_time = 0
+            trans_time_seq.append(fowrd_trans_time)
+            print('trans time forward ', fowrd_trans_time)
+            print("sub trans_rate ",trans_rate[j])
+            print('sub infer time ', sub_infer_time)
+            infer_time.append(sub_infer_time)
+            print("--------------------------------------------------------")
                     
-    #     print('End to end inference time ', np.sum(infer_time)+ np.sum(trans_time_seq))
-    #     print("--------------------------------------------------------")
+        print('End to end inference time ', np.sum(infer_time)+ np.sum(trans_time_seq))
+        print("--------------------------------------------------------")
 
-    #     probabilities = torch.nn.functional.softmax(output[0], dim=0)
-    #     with open("opt/imagenet_classes.txt", "r") as f:
-    #         categories = [s.strip() for s in f.readlines()]
-    #     # Show top categories per image
-    #     top5_prob, top5_catid = torch.topk(probabilities, 5)
-    #     for k in range(top5_prob.size(0)):
-    #         print(categories[top5_catid[k]], top5_prob[k].item()) 
+        probabilities = torch.nn.functional.softmax(output[0], dim=0)
+        with open("opt/imagenet_classes.txt", "r") as f:
+            categories = [s.strip() for s in f.readlines()]
+        # Show top categories per image
+        top5_prob, top5_catid = torch.topk(probabilities, 5)
+        for k in range(top5_prob.size(0)):
+            print(categories[top5_catid[k]], top5_prob[k].item()) 

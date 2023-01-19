@@ -70,7 +70,33 @@ def draw_graph(G):
 
     plt.savefig('network.png')
     # plt.show()
+def select_path(G, input_node, output_node):
+    paths = nx.all_simple_paths(G, input_node, output_node)
+    selected_path = []
+    current_path_weight = 0
+    for path in paths:
+        total_weight = 0
+        for i in range(len(path) - 1):
+            u, v = path[i], path[i+1]
+            #considering both rate and transmission
+            #lets take the highest avarage 
 
+            total_weight += G[u][v]['weight']/5 # the number 10 reduces the influence of the transmission in the selection
+            total_weight += G.nodes[u]['weight']
+
+        #amortized cost of the path
+        # print(total_weight, len(path))
+        total_weight = total_weight/len(path)
+        # print(total_weight)
+
+        if total_weight > current_path_weight:
+            selected_path.append(path)
+            current_path_weight = total_weight
+        
+    return selected_path[len(selected_path)-1]
+
+def determine_point_on_path(G, current_max_par_partitions, current_point_on_path):
+    return current_max_par_partitions
 
 # generate a random graph with 10 nodes and 15 edgespy
 # G = generate_random_graph(10, 15)
@@ -78,7 +104,7 @@ def draw_graph(G):
 # # print(x)
 # draw_graph(G)
 # print(all_paths_with_weights(G, 0, 9))
-# # print(longest_path(G, 0, 9))
+# print(select_path(G, 0, 9))
 # print(shortest_path(G, 0, 9))
 
 
