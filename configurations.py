@@ -1,6 +1,7 @@
 # configuration file for ARES parameters with VGG
 
 import sys
+import numpy as np
 
 SERVER_ADDR= '192.168.1.38'
 SERVER_PORT = 43000
@@ -37,6 +38,7 @@ model_len = 7 #
 
 # max parallelisable partitions in integers [1-4:5, 5-9:4, 10-14:3, 14-18:2]
 max_par_partitions = [5,4,3,2] # based on the neural network DAG
+layer_range = np.array([[0,4],[4,9],[9,14],[14,18]]) #very unreadable
 
 
 R = 100 

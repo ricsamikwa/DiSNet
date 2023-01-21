@@ -168,6 +168,8 @@ for i in range(0,num_edge_clusters):
     current_point_on_path = 0
     split_ratio = []
     devices = []
+    trans_rate_forward = [] # take the transrate between node p and p+1 on the path
+    par_trans_rate = [] # take from the devices mesh graph the average of the par neighbourhood
 
     for i in range(0, len(max_par_partitions)):
 
@@ -176,26 +178,36 @@ for i in range(0,num_edge_clusters):
         ### check here if there is a better neighbourhood <---> and update current_point_on_path
         # current_point_on_path = determine_point_on_path(G, current_max_par_partitions, current_point_on_path)
         
-        #######################
-
         p = selected_path[current_point_on_path]
     
         current_neighbours = []
         for n in G.neighbors(p):
-            current_neighbours.append([n, G.nodes[n]['weight']])
-        current_neighbours.append([p, G.nodes[p]['weight']])
-        # print(current_neighbours, len(current_neighbours))
+            current_neighbours.append([n, G.nodes[n]['weight'], G[p][n]['weight']])
+        
+        # snicky and dengerous
+        if current_point_on_path >=  len(selected_path)-1:
+            path_point = current_point_on_path-1
+            next_device = selected_path[path_point]
+            current_neighbours.append([p, G.nodes[p]['weight'], G[p][next_device]['weight']])
+            trans_rate_forward.append(G[p][selected_path[current_point_on_path-1]]['weight'])
+        else:
+            path_point = current_point_on_path+1
+            next_device = selected_path[path_point]
+            current_neighbours.append([p, G.nodes[p]['weight'], G[p][next_device]['weight']])
+            trans_rate_forward.append(G[p][selected_path[current_point_on_path+1]]['weight'])
 
         if len(current_neighbours) < current_max_par_partitions:
             current_max_par_partitions = len(current_neighbours)
-            horizontal_split_ratio, device = find_split_ratio(current_neighbours)
+            horizontal_split_ratio, device, in_throughput = find_split_ratio(current_neighbours)
             split_ratio.append(horizontal_split_ratio)
+            par_trans_rate.append(in_throughput)
             devices.append(device)
         else:
             #select a subset
             subset_current_neighbours = select_subset(current_neighbours, current_max_par_partitions)
-            horizontal_split_ratio, device = find_split_ratio(subset_current_neighbours)
+            horizontal_split_ratio, device, in_throughput = find_split_ratio(subset_current_neighbours)
             split_ratio.append(horizontal_split_ratio)
+            par_trans_rate.append(in_throughput)
             devices.append(device)
         
         ### this can go
@@ -203,43 +215,40 @@ for i in range(0,num_edge_clusters):
 
     print(split_ratio)
     print(devices)
-    ##########
 
     partition_input = []
-    layer_range = []
-    par_split = [4,3,2]
-    split_ratio = [[1,2,1,1],[7,2,2],[2,1]]
+   
     
-    #================
+    # max parallelisable partitions in integers [1-4:5, 5-9:4, 10-14:3, 14-18:2]
+    layer_range = configurations.layer_range
 
-    for m in range(0,18):
-        if m < 7:
-            cut = 0
-        elif m < 15 & m >= 6:
-            cut = 1
+    for l in range(0,18):
+
+        if l < 4:
+            point = 0
+        elif l < 9 & l >= 4:
+            point = 1
+        elif l < 14 & l >= 10:
+            point = 2
         else:
-            cut = 2
+            point = 3
         # cut = 1
-        partition = get_partiton_info_DiSNet(m,m,par_split[cut],split_ratio[cut]) #how to split each layer
+        partition = get_partiton_info_DiSNet(l,l,split_ratio[point]) #how to split each layer
         partition_input.append(partition)
-    #     print(partition)
 
-    layer_range = np.array([[0,3],[3,7],[7,13],[13,15],[15,18]]) # Vertical partitioning
-    # print(partition_input)
-    trans_rate = [40, 40, 40, 40, 40] # Mbps for devices 0 to 5
-    comp_rate = [[1,2,1,1],[1,2,1,1],[10,1,1],[1,1.5,1],[2,1]] # how best to represent this part?
+    comp_rate = split_ratio 
 
     output = input_batch
     infer_time = []
     trans_time_seq = []
     with torch.no_grad():
-        for j in range(0,len(trans_rate)):
+        for j in range(0,len(max_par_partitions)):
 
             print(partition_input[layer_range[j,0]:layer_range[j,1]])
-            output,sub_infer_time = opt_DiSNet(output, layer_range[j], partition_input[layer_range[j,0]:layer_range[j,1]], trans_rate[j],comp_rate[j], model)
+            output,sub_infer_time = opt_DiSNet(output, layer_range[j], partition_input[layer_range[j,0]:layer_range[j,1]], par_trans_rate[j],comp_rate[j], model)
             # print("Output",output.shape)
             # print(probabilities)
-            fowrd_trans_time = trans_time_forward(output, trans_rate[j],layer_range[j])
+            fowrd_trans_time = trans_time_forward(output, trans_rate_forward[j],layer_range[j])
             # fowrd_trans_time = 0
             trans_time_seq.append(fowrd_trans_time)
             print('trans time forward ', fowrd_trans_time)

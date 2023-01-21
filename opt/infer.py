@@ -52,9 +52,9 @@ def get_partiton_info(start_layer, end_layer, par_num):
     partition = calculator.input
     return partition
 
-def get_partiton_info_DiSNet(start_layer, end_layer, par_num, split_ratio):
+def get_partiton_info_DiSNet(start_layer, end_layer, split_ratio):
     # print(start_layer, end_layer, par_num)
-    calculator = ReceptiveFieldCalculatorDiSNet(224, start_layer, end_layer, par_num, split_ratio)
+    calculator = ReceptiveFieldCalculatorDiSNet(224, start_layer, end_layer, len(split_ratio), split_ratio)
     partition = calculator.input
     # print(partition)
     return partition

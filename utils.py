@@ -38,9 +38,12 @@ def find_split_ratio(current_neighbours):
 
   split_ratio = []
   nodes = []
+  trans_rate = []
+
   for i in range(0, len(current_neighbours)):
     split_ratio.append(current_neighbours[i][1])
     nodes.append(current_neighbours[i][0])
+    trans_rate.append(current_neighbours[i][2])
+  throughput = sum(trans_rate) / len(trans_rate)
 
-
-  return split_ratio, nodes
+  return split_ratio, nodes, throughput
