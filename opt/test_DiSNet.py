@@ -176,9 +176,14 @@ for i in range(0,num_edge_clusters):
         current_max_par_partitions = max_par_partitions[i]
 
         ### check here if there is a better neighbourhood <---> and update current_point_on_path
-        # current_point_on_path = determine_point_on_path(G, current_max_par_partitions, current_point_on_path)
+        ### selecting the best of the remaining ones always
+        ### add calculation for going to the best neighbours
+        p = determine_opt_neighbours(G, selected_path, current_max_par_partitions, current_point_on_path)
         
-        p = selected_path[current_point_on_path]
+        current_point_on_path = selected_path.index(p)
+        # p = selected_path[current_point_on_path]
+
+        # print(p, temp_current_point_on_path)
     
         current_neighbours = []
         for n in G.neighbors(p):
@@ -210,8 +215,8 @@ for i in range(0,num_edge_clusters):
             par_trans_rate.append(in_throughput)
             devices.append(device)
         
-        ### this can go
-        current_point_on_path = current_point_on_path+1
+        ### this is the opposite of the a
+        # current_point_on_path = current_point_on_path+1
 
     print(split_ratio)
     print(devices)

@@ -1,6 +1,7 @@
 import networkx as nx
 import random
 import matplotlib.pyplot as plt
+from utils import select_subset_neighbours
 
 
 def generate_random_graph(n, m, weight_range=(10,50), comp_rate_range=(1,10)):
@@ -95,8 +96,37 @@ def select_path(G, input_node, output_node):
         
     return selected_path[len(selected_path)-1]
 
-def determine_point_on_path(G, current_max_par_partitions, current_point_on_path):
-    return current_max_par_partitions
+def determine_opt_neighbours(G, selected_path, current_max_par_partitions, current_point_on_path):
+    selected_point = current_point_on_path
+    selected_neighbours_weight = 0
+
+    for p in selected_path[current_point_on_path:]:
+        total_weight = 0
+
+        neighbours = []
+        for n in G.neighbors(p):
+            neighbours.append(G.nodes[n]['weight'])
+            # total_weight += G[n][p]['weight']/5 + G.nodes[n]['weight']
+        neighbours.append(G.nodes[n]['weight'])
+
+        #check weights later
+
+        if len(neighbours) > current_max_par_partitions:
+            # print("neighbours :", neighbours)
+            subset_neighbors = select_subset_neighbours(neighbours, current_max_par_partitions)
+            # print("subset_neighbors :", subset_neighbors)
+
+            total_weight = sum(subset_neighbors)/current_max_par_partitions
+        else:
+            total_weight = sum(neighbours)/ len(neighbours)
+
+        if p == selected_point:
+            selected_neighbours_weight = total_weight
+        if selected_neighbours_weight < total_weight:
+            selected_point = p
+            selected_neighbours_weight = total_weight
+
+    return selected_point
 
 # generate a random graph with 10 nodes and 15 edgespy
 # G = generate_random_graph(10, 15)
