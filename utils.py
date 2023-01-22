@@ -38,7 +38,7 @@ def select_subset_neighbours(neighbours, current_max_par_partitions):
   sorted_current_neighbours = sorted(neighbours, reverse=True)
 
   top_neighbours = sorted_current_neighbours[:current_max_par_partitions]
-  
+
   return top_neighbours
 
 def find_split_ratio(current_neighbours):

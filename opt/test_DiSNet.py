@@ -170,6 +170,7 @@ for i in range(0,num_edge_clusters):
     devices = []
     trans_rate_forward = [] # take the transrate between node p and p+1 on the path
     par_trans_rate = [] # take from the devices mesh graph the average of the par neighbourhood
+    execution_path = []
 
     for i in range(0, len(max_par_partitions)):
 
@@ -179,7 +180,7 @@ for i in range(0,num_edge_clusters):
         ### selecting the best of the remaining ones always
         ### add calculation for going to the best neighbours
         p = determine_opt_neighbours(G, selected_path, current_max_par_partitions, current_point_on_path)
-        
+        execution_path.append(p)
         current_point_on_path = selected_path.index(p)
         # p = selected_path[current_point_on_path]
 
@@ -253,11 +254,25 @@ for i in range(0,num_edge_clusters):
             output,sub_infer_time = opt_DiSNet(output, layer_range[j], partition_input[layer_range[j,0]:layer_range[j,1]], par_trans_rate[j],comp_rate[j], model)
             # print("Output",output.shape)
             # print(probabilities)
-            fowrd_trans_time = trans_time_forward(output, trans_rate_forward[j],layer_range[j])
+
+            # check if there transfer of neighbourhoods for the trans forward time on path
+            fowrd_trans_time = 0
+            if j == len(max_par_partitions)-1:
+                fowrd_trans_time = 0
+            else:
+                if execution_path[j] == execution_path[j +1]:
+                    if devices[j] == devices[j + 1]:
+                        fowrd_trans_time = 0
+                    else:
+                        fowrd_trans_time = trans_time_forward(output, trans_rate_forward[j]*10,layer_range[j])
+                else:
+                    fowrd_trans_time = trans_time_forward(output, trans_rate_forward[j],layer_range[j])
+
+                
             # fowrd_trans_time = 0
             trans_time_seq.append(fowrd_trans_time)
             print('trans time forward ', fowrd_trans_time)
-            print("sub trans_rate ",trans_rate[j])
+            print("sub trans_rate ",trans_rate_forward[j])
             print('sub infer time ', sub_infer_time)
             infer_time.append(sub_infer_time)
             print("--------------------------------------------------------")
