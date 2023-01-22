@@ -3,13 +3,14 @@ import torch.nn as nn
 import math
 import time
 import sys
+import numpy as np
 import os
 from rf_vgg import ReceptiveFieldCalculator
 from rf_DiSNet import ReceptiveFieldCalculatorDiSNet
 o_path = os.getcwd()
 sys.path.append(o_path)
 
-DEVICE_PACE_RATE = 100
+DEVICE_PACE_RATE = 10
 
 def infer_block(in_tensor, start_layer, end_layer, model):
     cmp_time = []
@@ -364,9 +365,14 @@ def opt_modnn(in_img, input_index, trans_rate, model):
     return output_tensor, t
 
 ##################### workig here #######################
-def opt_DiSNet(in_img, layer_range, input_index, trans_rate, comp_rate, model):
+def opt_DiSNet(in_img, layer_range, input_index, trans_rate, comp_rate, split_ratio, model):
     # layers = 10
     # layers = 21 
+    test_split_ratio = [5,5,5,5,5]
+
+    norm_comp_rate = comp_rate / np.linalg.norm(comp_rate)
+    norm_split_ratio = comp_rate / np.linalg.norm(split_ratio)
+
     
     layers = layer_range[1]
     if layer_range[1] == 18:
@@ -431,7 +437,7 @@ def opt_DiSNet(in_img, layer_range, input_index, trans_rate, comp_rate, model):
                         out_tensor.append(output_sub)
                     
                     #this is per layer 
-                    t_sub_cmp_proportional = (1 + ((1- comp_rate[j])/sum(comp_rate)))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
+                    t_sub_cmp_proportional = (1 + ((norm_split_ratio[j]- norm_comp_rate[j])/norm_split_ratio[j]))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
                     # print(t_sub_cmp_proportional, t_sub_cmp, t_sub_rec, t_sub_send) # more checks later
                     # t_sub.append(t_sub_rec + t_sub_cmp + t_sub_send)
                     t_sub.append(t_sub_rec + t_sub_cmp_proportional + t_sub_send)

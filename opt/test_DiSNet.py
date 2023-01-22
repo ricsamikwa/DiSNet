@@ -251,7 +251,7 @@ for i in range(0,num_edge_clusters):
         for j in range(0,len(max_par_partitions)):
 
             print(partition_input[layer_range[j,0]:layer_range[j,1]])
-            output,sub_infer_time = opt_DiSNet(output, layer_range[j], partition_input[layer_range[j,0]:layer_range[j,1]], par_trans_rate[j],comp_rate[j], model)
+            output,sub_infer_time = opt_DiSNet(output, layer_range[j], partition_input[layer_range[j,0]:layer_range[j,1]], par_trans_rate[j],comp_rate[j], split_ratio[j], model)
             # print("Output",output.shape)
             # print(probabilities)
 
