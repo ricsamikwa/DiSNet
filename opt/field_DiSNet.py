@@ -23,9 +23,9 @@ vgg16 = {
 }
 
 
-class ReceptiveFieldCalculatorDiSNet:
+class FieldCalculatorDiSNet:
     def __init__(self, input_image_size, input_num, output_num, partition_num, split_ratio): #img, start layer, end layer, number of partitions
-        super(ReceptiveFieldCalculatorDiSNet, self).__init__()
+        super(FieldCalculatorDiSNet, self).__init__()
         self.architecture = vgg16
         self.input_image_size = input_image_size
         self.input_num = input_num

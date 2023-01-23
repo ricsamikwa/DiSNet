@@ -7,11 +7,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 import math
-from rf_vgg import ReceptiveFieldCalculator
-from rf_DiSNet import ReceptiveFieldCalculatorDiSNet
+from field_vgg import FieldCalculator
+from field_DiSNet import FieldCalculatorDiSNet
 from torchvision import transforms
 from models.model_vgg16 import VGG16
-from infer import *
+from inference import *
 from utils import *
 from network import *
 import configurations
@@ -19,7 +19,7 @@ import configurations
 
 
 # load image
-filename = ("data/dog.jpg")
+filename = ("input/dog.jpg")
 input_image = Image.open(filename)
 preprocess = transforms.Compose([
     transforms.Resize(256),
@@ -47,47 +47,6 @@ if torch.cuda.is_available():
     input_batch = input_batch.to('cuda:0')
     model.to('cuda:0')
 
-# # inference HALP
-# for i in range(0,len(num_sever)):
-#     print("--------------------------------------------------------")
-#     print("server:",num_sever[i])
-#     with torch.no_grad():
-        
-#         infer_time, trans_time, output = opt_flp(input_batch, trans_rate[0], num_sever[i],model) 
-#         probabilities = torch.nn.functional.softmax(output[0], dim=0)
-#         # print(probabilities)
-#         print('infer time ', infer_time)
-#         print('trans time ', trans_time)
-
-
-#         with open("opt/imagenet_classes.txt", "r") as f:
-#             categories = [s.strip() for s in f.readlines()]
-#         # Show top categories per image
-#         top5_prob, top5_catid = torch.topk(probabilities, 5)
-#         for k in range(top5_prob.size(0)):
-#             print(categories[top5_catid[k]], top5_prob[k].item())    
-
-
-# print("--------------------------------------------------------")
-
-# #inference HALP
-# for i in range(0,len(num_sever)):
-#     with torch.no_grad():
-#         for j in range(0,len(trans_rate)):
-#             infer_time, trans_time, output = opt_flp(input_batch, trans_rate[j], num_sever[i],model) 
-#             probabilities = torch.nn.functional.softmax(output[0], dim=0)
-#             # print(probabilities)
-#             print("trans_rate HARP",trans_rate[j])
-#             print('infer time ', infer_time)
-#             print('trans time ', trans_time)
-            
-#             with open("opt/imagenet_classes.txt", "r") as f:
-#                 categories = [s.strip() for s in f.readlines()]
-#             # Show top categories per image
-#             top5_prob, top5_catid = torch.topk(probabilities, 5)
-#             for k in range(top5_prob.size(0)):
-#                 print(categories[top5_catid[k]], top5_prob[k].item())  
-#             print("--------------------------------------------------------")            
 
 # inference modnn
 # for i in range(0,len(num_sever)):
@@ -115,6 +74,7 @@ if torch.cuda.is_available():
 #             for k in range(top5_prob.size(0)):
 #                 print(categories[top5_catid[k]], top5_prob[k].item()) 
 #             print("--------------------------------------------------------")
+
 def take_second(elem):
     return elem[1]
 num_edge_clusters = 1

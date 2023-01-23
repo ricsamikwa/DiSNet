@@ -1,4 +1,3 @@
-# configuration file for ARES parameters with VGG
 
 import sys
 import numpy as np
@@ -7,9 +6,7 @@ SERVER_ADDR= '192.168.1.38'
 SERVER_PORT = 43000
 
 # Dataset 
-# dataset_name = 'CIFAR10'
-# home = sys.path[0].split('RES-Things')[0] + 'RES-Things'
-# dataset_path = home +'/datasets/'+ dataset_name +'/'
+
 N = 50000 # data length
 
 # configuration settings - model
@@ -51,11 +48,6 @@ B = 100 # minibatch size
 # CLIENTS_CONFIG= {'192.168.1.33':0, '192.168.1.41':1, '192.168.1.40':2, '192.168.1.42':3, '192.168.1.43':4}
 # CLIENTS_LIST= ['192.168.1.33', '192.168.1.41', '192.168.1.40', '192.168.1.42', '192.168.1.43'] 
 K = 2 
-
-HOST2IP = {'nano6':'192.168.1.42', 'nano8':'192.168.1.43'}
-CLIENTS_CONFIG= { '192.168.1.42':0, '192.168.1.43':1}
-CLIENTS_LIST= [ '192.168.1.42', '192.168.1.43'] 
-
 
 iteration = {'192.168.1.33':5, '192.168.1.41':5, '192.168.1.40':10, '192.168.1.42':5, '192.168.1.43':5}  
 
