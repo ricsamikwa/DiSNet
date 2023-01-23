@@ -10,7 +10,7 @@ from field_DiSNet import FieldCalculatorDiSNet
 o_path = os.getcwd()
 sys.path.append(o_path)
 
-DEVICE_PACE_RATE = 10
+DEVICE_PACE_RATE = 10 #this needs investigation
 
 def infer_block(in_tensor, start_layer, end_layer, model):
     cmp_time = []
@@ -35,6 +35,22 @@ def infer_block(in_tensor, start_layer, end_layer, model):
     return out_tesor,cmp_time
 
 def infer_layer(in_tensor,model,layer_num):
+    start_infer = 0
+    end_infer = 0
+    
+    with torch.no_grad():
+        start_infer = time.time()
+        # out_tensor = model([in_tensor,layer_num])
+
+        for i in range(0,100):
+            out_tensor = model([in_tensor,layer_num])
+        end_infer = time.time()
+    # infer_time = end_infer-start_infer
+    infer_time = (end_infer-start_infer)/100
+
+    return out_tensor, infer_time
+
+def layer_infer(in_tensor,model,layer_num):
     start_infer = time.time()
     with torch.no_grad():
         out_tensor = model([in_tensor,layer_num])
@@ -46,7 +62,6 @@ def infer_layer(in_tensor,model,layer_num):
     # infer_time = (end_infer-start_infer)/1000
 
     return out_tensor, infer_time
-
 def get_partiton_info(start_layer, end_layer, par_num):
     # print(start_layer, end_layer, par_num)
     calculator = FieldCalculator(224, start_layer, end_layer, par_num)
@@ -167,10 +182,12 @@ class Opt_Par:
 def opt_DiSNet(in_img, layer_range, input_index, trans_rate, comp_rate, split_ratio, model):
     # layers = 10
     # layers = 21 
-    test_split_ratio = [5,5,5,5,5]
 
     norm_comp_rate = comp_rate / np.linalg.norm(comp_rate)
     norm_split_ratio = comp_rate / np.linalg.norm(split_ratio)
+
+    # print("norm_comp_rate: ",norm_comp_rate)
+    # print("norm_split_ratio: ",norm_split_ratio)
 
     
     layers = layer_range[1]
@@ -236,7 +253,7 @@ def opt_DiSNet(in_img, layer_range, input_index, trans_rate, comp_rate, split_ra
                         out_tensor.append(output_sub)
                     
                     #this is per layer 
-                    t_sub_cmp_proportional = (1 + ((norm_split_ratio[j]- norm_comp_rate[j])/norm_split_ratio[j]))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
+                    t_sub_cmp_proportional = (1 + (abs(split_ratio[j]-comp_rate[j])/comp_rate[j]))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
                     # print(t_sub_cmp_proportional, t_sub_cmp, t_sub_rec, t_sub_send) # more checks later
                     # t_sub.append(t_sub_rec + t_sub_cmp + t_sub_send)
                     t_sub.append(t_sub_rec + t_sub_cmp_proportional + t_sub_send)
@@ -259,7 +276,7 @@ def opt_DiSNet(in_img, layer_range, input_index, trans_rate, comp_rate, split_ra
     return output_tensor, t
 
 
-def opt_modnn(in_img, input_index, trans_rate, model):
+def opt_modnn(in_img, input_index, trans_rate,comp_rate_modnn, model):
     # layers = 10
     layers = 21 
     # input size [s1,s2,h1,kernel_size]
@@ -290,7 +307,7 @@ def opt_modnn(in_img, input_index, trans_rate, model):
                     t_sub_rec = 32*inputsize_sub[1]*inputsize_sub[2]*inputsize_sub[3]/(1024*1024*trans_rate)
                     # print(in_sub.shape, i)
 
-                    output_sub, t_sub_cmp = infer_layer(in_sub, model, i)
+                    output_sub, t_sub_cmp = layer_infer(in_sub, model, i)
                     
                     outputsize_sub = output_sub.size()
 
@@ -307,7 +324,9 @@ def opt_modnn(in_img, input_index, trans_rate, model):
                     elif kerner_size[i] == 2:
                         t_sub_send = 32*outputsize_sub[1]*outputsize_sub[2]*outputsize_sub[3]/(1024*1024*trans_rate)
                         out_tensor.append(output_sub)
-                    
+                                        
+                    # t_sub_cmp_proportional = (1 + (abs(comp_rate_modnn[j]-comp_rate_modnn[j])/comp_rate_modnn[j]))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
+
                     t_sub_cmp_proportional = (1 + (1/3))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
                     # print(t_sub_cmp_proportional, t_sub_cmp, t_sub_rec, t_sub_send) # more checks later
                     # t_sub.append(t_sub_rec + t_sub_cmp + t_sub_send)
