@@ -73,20 +73,20 @@ for the last layer
 """
 
 
-####### updates
+####### params
 
-# max parallelisable partitions in integers [1-4:5, 5-9:4, 10-14:3, 14-18:2]
-max_par_partitions = configurations.max_par_partitions 
+mesh_network_id = 1
+num_runs = 10
+num_devices = 10
+num_connections = 15
 
 print("==================Initiating tests===================>")
 # generate mesh network graph with 10 devices and 15 connections with random resources and transmission throughput
-
-num_devices = 10
-num_connections = 15
 print('Generating random network graph of heterogenous resources (comp, network)')
 G = generate_random_graph(num_devices, num_connections)
-draw_graph(G)
+draw_graph(G, mesh_network_id)
 
+max_par_partitions = configurations.max_par_partitions 
 
 #different nodes
 while True:
@@ -192,13 +192,14 @@ print(partition_input)
 print("===================Inference operations====================>")
 
 comp_rate = split_ratio
+filename = str(mesh_network_id)+'_'+str(num_devices)+'_DiSNet.csv'
 
-for t in range(0, 2):
+for t in range(0, num_runs):
     #holders
     infer_time = 0
     infer_accurancy = 0
-    
-    print("++++++++++++++++++++++++RUN : ", t)
+    if t == 0:
+        print("++++++++++++++++++++++++RUN : ", t)
 
     output = input_batch
     infer_time = []
@@ -227,28 +228,29 @@ for t in range(0, 2):
                 
             # fowrd_trans_time = 0
             trans_time_seq.append(fowrd_trans_time)
-            print('trans time forward ', fowrd_trans_time)
-            print("sub trans_rate ",trans_rate_forward[j])
-            print('sub infer time ', sub_infer_time)
+            if t == 0:
+                print('trans time forward ', fowrd_trans_time)
+                print("sub trans_rate ",trans_rate_forward[j])
+                print('sub infer time ', sub_infer_time)
             infer_time.append(sub_infer_time)
 
         infer_time = np.sum(infer_time)+ np.sum(trans_time_seq)
-        print("--------------------------------------------------------")            
-        print('End to end inference time ', infer_time)
-        print("========================================================")
+
+        if t == 0:
+            print("--------------------------------------------------------")            
+            print('End to end inference time ', infer_time)
+            print("========================================================")
 
         probabilities = torch.nn.functional.softmax(output[0], dim=0)
         with open("opt/imagenet_classes.txt", "r") as f:
             categories = [s.strip() for s in f.readlines()]
         # Show top categories per image
         top5_prob, top5_catid = torch.topk(probabilities, 5)
-        for k in range(top5_prob.size(0)):
-            print(categories[top5_catid[k]], top5_prob[k].item()) 
+        if t == 0:
+            for k in range(top5_prob.size(0)):
+                print(categories[top5_catid[k]], top5_prob[k].item()) 
 
         infer_accurancy = top5_prob[0].item()
-    
-    filename = str(num_devices)+'_DiSNet.csv'
-
 
     with open('logs/'+filename,'a', newline='') as file:
         writer = csv.writer(file)
@@ -283,40 +285,42 @@ else:
 print('comp_rate_modnn ',comp_rate_modnn)
 print('trans_rate_modnn ',trans_rate_modnn)
 
+filename = str(mesh_network_id)+'_'+str(num_devices)+'_MODNN.csv'
+
+partition_input = []
+for m in range(0,18):
+    partition = get_partiton_info(m,m,num_devices_modnn) #how to split each layer
+    partition_input.append(partition)
+#     print(partition)
+# print(partition_input)
 
 # inference modnn
-for i in range(0, 2):
+for i in range(0, num_runs):
     infer_time_modnn = 0
     infer_accurancy = 0
-    partition_input = []
-    for m in range(0,18):
-        partition = get_partiton_info(m,m,num_devices_modnn) #how to split each layer
-        partition_input.append(partition)
-    #     print(partition)
-    # print(partition_input)
+    
     with torch.no_grad():
-        for j in range(0,2):
-            output,infer_time_modnn = opt_modnn(input_batch, partition_input, trans_rate_modnn,comp_rate_modnn, model)
-            probabilities = torch.nn.functional.softmax(output[0], dim=0)
-            # print(probabilities)
-            print("trans_rate ",trans_rate_modnn)
+
+        output,infer_time_modnn = opt_modnn(input_batch, partition_input, trans_rate_modnn,comp_rate_modnn, model)
+        probabilities = torch.nn.functional.softmax(output[0], dim=0)
+        # print(probabilities)
+        if i == 0:
+            # print("trans_rate ",trans_rate_modnn)
             print("--------------------------------------------------------")
             print('infer time ', infer_time_modnn)
             print("--------------------------------------------------------")
 
 
-            with open("opt/imagenet_classes.txt", "r") as f:
-                categories = [s.strip() for s in f.readlines()]
-            # Show top categories per image
-            top5_prob, top5_catid = torch.topk(probabilities, 5)
+        with open("opt/imagenet_classes.txt", "r") as f:
+            categories = [s.strip() for s in f.readlines()]
+        # Show top categories per image
+        top5_prob, top5_catid = torch.topk(probabilities, 5)
+        if i == 0:
             for k in range(top5_prob.size(0)):
                 print(categories[top5_catid[k]], top5_prob[k].item()) 
             print("--------------------------------------------------------")
-            
-            infer_accurancy = top5_prob[0].item()
-
-    filename = str(num_devices)+'_MODNN.csv'
-
+        
+        infer_accurancy = top5_prob[0].item()
 
     with open('logs/'+filename,'a', newline='') as file:
         writer = csv.writer(file)
@@ -351,40 +355,42 @@ else:
 print('comp_rate_ds ',comp_rate_ds)
 print('trans_rate_ds ',trans_rate_ds)
 
+filename = str(mesh_network_id)+'_'+str(num_devices)+'_DeepSlicing.csv'
+
+partition_input = []
+for m in range(0,18):
+    partition = get_partiton_info(m,m,num_devices_ds) #how to split each layer
+    partition_input.append(partition)
+#     print(partition)
+# print(partition_input)
 
 # inference ds
-for i in range(0, 2):
+for i in range(0, num_runs):
     infer_time_ds = 0
     infer_accurancy = 0
-    partition_input = []
-    for m in range(0,18):
-        partition = get_partiton_info(m,m,num_devices_ds) #how to split each layer
-        partition_input.append(partition)
-    #     print(partition)
-    # print(partition_input)
+    
     with torch.no_grad():
-        for j in range(0,2):
-            output,infer_time_ds = opt_deepsclicing(input_batch, partition_input, trans_rate_ds,comp_rate_ds, model)
-            probabilities = torch.nn.functional.softmax(output[0], dim=0)
-            # print(probabilities)
+        
+        output,infer_time_ds = opt_deepsclicing(input_batch, partition_input, trans_rate_ds,comp_rate_ds, model)
+        probabilities = torch.nn.functional.softmax(output[0], dim=0)
+        # print(probabilities)
+        if i == 0:
             print("trans_rate ",trans_rate_ds)
             print("--------------------------------------------------------")
             print('infer time ', infer_time_ds)
             print("--------------------------------------------------------")
 
 
-            with open("opt/imagenet_classes.txt", "r") as f:
-                categories = [s.strip() for s in f.readlines()]
-            # Show top categories per image
-            top5_prob, top5_catid = torch.topk(probabilities, 5)
+        with open("opt/imagenet_classes.txt", "r") as f:
+            categories = [s.strip() for s in f.readlines()]
+        # Show top categories per image
+        top5_prob, top5_catid = torch.topk(probabilities, 5)
+        if i == 0:
             for k in range(top5_prob.size(0)):
                 print(categories[top5_catid[k]], top5_prob[k].item()) 
             print("--------------------------------------------------------")
-            
-            infer_accurancy = top5_prob[0].item()
-
-    filename = str(num_devices)+'_DS.csv'
-
+        
+        infer_accurancy = top5_prob[0].item()
 
     with open('logs/'+filename,'a', newline='') as file:
         writer = csv.writer(file)

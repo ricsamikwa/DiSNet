@@ -345,7 +345,7 @@ def opt_modnn(in_img, input_index, trans_rate,comp_rate_modnn, model):
                 in_tensor = output_tensor
                 t_FLs = t_FLs + t_fl
         t = t_CLs + t_FLs
-        print("this is t", t)
+        # print("this is t", t)
     return output_tensor, t
 
 
@@ -420,5 +420,5 @@ def opt_deepsclicing(in_img, input_index, trans_rate,comp_rate_modnn, model):
                 in_tensor = output_tensor
                 t_FLs = t_FLs + t_fl
         t = t_CLs + t_FLs
-        print("this is t", t)
+        # print("this is t", t)
     return output_tensor, t

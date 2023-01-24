@@ -61,7 +61,7 @@ def shortest_path(G, start, end):
     except nx.NetworkXNoPath:
         return None
 
-def draw_graph(G):
+def draw_graph(G, mesh_network_id):
     # Draw the graph
     pos = nx.spring_layout(G)
     nx.draw_networkx_nodes(G, pos, node_size=1000, node_color='blue')
@@ -69,7 +69,8 @@ def draw_graph(G):
     nx.draw_networkx_edge_labels(G, pos, edge_labels={(u, v): G[u][v]['weight'] for u, v in G.edges()})
     nx.draw_networkx_labels(G, pos, labels={i: f"{i} ({G.nodes[i]['weight']})" for i in G.nodes()})
 
-    plt.savefig('network.png')
+    graph_name = 'network'+str(mesh_network_id)+'.png'
+    plt.savefig(graph_name)
     # plt.show()
 def select_path(G, input_node, output_node):
     paths = nx.all_simple_paths(G, input_node, output_node)
