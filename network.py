@@ -1,6 +1,7 @@
 import networkx as nx
 import random
 import matplotlib.pyplot as plt
+import pickle
 from utils import select_subset_neighbours
 
 
@@ -26,6 +27,25 @@ def generate_random_graph(n, m, weight_range=(10,50), comp_rate_range=(1,10)):
             w = random.randint(*weight_range)
             G.add_edge(u, v, weight=w)
     
+    return G
+
+def save_graph(G, mesh_network_id):
+
+    # pickle.dump(G, open(graph_name, 'wb'))
+    serialized = pickle.dumps(G)
+    graph_name = 'network'+str(mesh_network_id)+'.txt'
+
+    with open(graph_name,'wb') as file_object:
+        file_object.write(serialized)
+
+def read_graph(mesh_network_id):
+    
+    graph_name = 'network'+str(mesh_network_id)+'.txt'
+    # G = pickle.load(open(graph_name, 'rb'))
+    with open(graph_name,'rb') as file_object:
+        raw_data = file_object.read()
+
+    G = pickle.loads(raw_data)
     return G
 
 def all_paths_with_weights(G, start, end):

@@ -81,19 +81,39 @@ num_devices = 10
 num_connections = 15
 
 print("==================Initiating tests===================>")
-# generate mesh network graph with 10 devices and 15 connections with random resources and transmission throughput
-print('Generating random network graph of heterogenous resources (comp, network)')
-G = generate_random_graph(num_devices, num_connections)
-draw_graph(G, mesh_network_id)
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+## generate mesh network graph with num_devices devices and num_connections connections with random resources and transmission throughput
+# print('Generating random network graph of heterogenous resources (comp, network)')
+# G = generate_random_graph(num_devices, num_connections)
+
+# draw_graph(G, mesh_network_id) # picture
+
+# save_graph(G, mesh_network_id) # dump the backup
+
+#                       OR 
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+## reading existing graph
+print('Loading existing network graph of heterogenous resources (comp, network)')
+G = read_graph(mesh_network_id)
 
 max_par_partitions = configurations.max_par_partitions 
 
-#different nodes
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#different random input and output nodes
 while True:
     input_node = random.randint(0, 9)
     output_node = random.randint(0, 9)
     if input_node != output_node:
         break
+
+#                       OR 
+
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+## if needed keep previous input and output nodes
+input_node = 4
+output_node = 6
 
 print('input node : ', input_node)
 print('output node : ', output_node)
@@ -192,7 +212,7 @@ print(partition_input)
 print("===================Inference operations====================>")
 
 comp_rate = split_ratio
-filename = str(mesh_network_id)+'_'+str(num_devices)+'_DiSNet.csv'
+filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_DiSNet.csv'
 
 for t in range(0, num_runs):
     #holders
@@ -285,7 +305,7 @@ else:
 print('comp_rate_modnn ',comp_rate_modnn)
 print('trans_rate_modnn ',trans_rate_modnn)
 
-filename = str(mesh_network_id)+'_'+str(num_devices)+'_MODNN.csv'
+filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_MODNN.csv'
 
 partition_input = []
 for m in range(0,18):
@@ -355,7 +375,7 @@ else:
 print('comp_rate_ds ',comp_rate_ds)
 print('trans_rate_ds ',trans_rate_ds)
 
-filename = str(mesh_network_id)+'_'+str(num_devices)+'_DeepSlicing.csv'
+filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_DeepSlicing.csv'
 
 partition_input = []
 for m in range(0,18):
