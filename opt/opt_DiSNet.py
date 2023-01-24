@@ -15,6 +15,7 @@ from inference import *
 from utils import *
 from network import *
 import configurations
+import csv
 
 
 
@@ -93,8 +94,9 @@ while True:
     output_node = random.randint(0, 9)
     if input_node != output_node:
         break
+
 print('input node : ', input_node)
-print('output node : ', input_node)
+print('output node : ', output_node)
 
 print('----------------------------------------------------------')
 print('------------------------DiSNet----------------------------')
@@ -192,11 +194,10 @@ print("===================Inference operations====================>")
 comp_rate = split_ratio
 
 for t in range(0, 2):
-    #blah blah blah
-    # if t == 0:
-    #     comp_rate = split_ratio
-    # else:
-    #     comp_rate = [[3,3,3,3,3],[3,3,3,3],[3,3,3],[3,3]]
+    #holders
+    infer_time = 0
+    infer_accurancy = 0
+    
     print("++++++++++++++++++++++++RUN : ", t)
 
     output = input_batch
@@ -230,9 +231,10 @@ for t in range(0, 2):
             print("sub trans_rate ",trans_rate_forward[j])
             print('sub infer time ', sub_infer_time)
             infer_time.append(sub_infer_time)
-            
+
+        infer_time = np.sum(infer_time)+ np.sum(trans_time_seq)
         print("--------------------------------------------------------")            
-        print('End to end inference time ', np.sum(infer_time)+ np.sum(trans_time_seq))
+        print('End to end inference time ', infer_time)
         print("========================================================")
 
         probabilities = torch.nn.functional.softmax(output[0], dim=0)
@@ -242,6 +244,15 @@ for t in range(0, 2):
         top5_prob, top5_catid = torch.topk(probabilities, 5)
         for k in range(top5_prob.size(0)):
             print(categories[top5_catid[k]], top5_prob[k].item()) 
+
+        infer_accurancy = top5_prob[0].item()
+    
+    filename = str(num_devices)+'_DiSNet.csv'
+
+
+    with open('logs/'+filename,'a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([ infer_time, infer_accurancy])
 
 ############################################################################################################
 print('---------------------------------------------------------')
@@ -255,11 +266,11 @@ for m_n in G.neighbors(input_node):
 
 modnn_devices.append([input_node, G.nodes[input_node]['weight'], 0])
 
-num_devices = len(modnn_devices)
+num_devices_modnn = len(modnn_devices)
 
-if num_devices > max_par_partitions[2]:
+if num_devices_modnn > max_par_partitions[2]:
     sub_modnn_devices = modnn_devices[:max_par_partitions[2]]
-    num_devices = len(sub_modnn_devices)
+    num_devices_modnn = len(sub_modnn_devices)
     comp_rate_modnn, device_modnn, in_throughput_modnn = find_split_ratio(sub_modnn_devices)
 
     trans_rate_modnn = in_throughput_modnn
@@ -269,23 +280,28 @@ else:
 
     trans_rate_modnn = in_throughput_modnn
 
+print('comp_rate_modnn ',comp_rate_modnn)
+print('trans_rate_modnn ',trans_rate_modnn)
+
 
 # inference modnn
 for i in range(0, 2):
+    infer_time_modnn = 0
+    infer_accurancy = 0
     partition_input = []
     for m in range(0,18):
-        partition = get_partiton_info(m,m,num_devices) #how to split each layer
+        partition = get_partiton_info(m,m,num_devices_modnn) #how to split each layer
         partition_input.append(partition)
     #     print(partition)
     # print(partition_input)
     with torch.no_grad():
         for j in range(0,2):
-            output,infer_time = opt_modnn(input_batch, partition_input, trans_rate_modnn,comp_rate_modnn, model)
+            output,infer_time_modnn = opt_modnn(input_batch, partition_input, trans_rate_modnn,comp_rate_modnn, model)
             probabilities = torch.nn.functional.softmax(output[0], dim=0)
             # print(probabilities)
             print("trans_rate ",trans_rate_modnn)
             print("--------------------------------------------------------")
-            print('infer time ', infer_time)
+            print('infer time ', infer_time_modnn)
             print("--------------------------------------------------------")
 
 
@@ -296,3 +312,12 @@ for i in range(0, 2):
             for k in range(top5_prob.size(0)):
                 print(categories[top5_catid[k]], top5_prob[k].item()) 
             print("--------------------------------------------------------")
+            
+            infer_accurancy = top5_prob[0].item()
+
+    filename = str(num_devices)+'_MODNN.csv'
+
+
+    with open('logs/'+filename,'a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([ infer_time_modnn, infer_accurancy]) 

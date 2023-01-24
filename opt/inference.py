@@ -327,7 +327,7 @@ def opt_modnn(in_img, input_index, trans_rate,comp_rate_modnn, model):
                                         
                     # t_sub_cmp_proportional = (1 + (abs(comp_rate_modnn[j]-comp_rate_modnn[j])/comp_rate_modnn[j]))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
 
-                    t_sub_cmp_proportional = (1 + (1/3))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
+                    t_sub_cmp_proportional = (1 + abs(1/3 - (comp_rate_modnn[j]/sum(comp_rate_modnn))))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
                     # print(t_sub_cmp_proportional, t_sub_cmp, t_sub_rec, t_sub_send) # more checks later
                     # t_sub.append(t_sub_rec + t_sub_cmp + t_sub_send)
                     t_sub.append(t_sub_rec + t_sub_cmp_proportional + t_sub_send)
