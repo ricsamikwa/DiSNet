@@ -321,3 +321,71 @@ for i in range(0, 2):
     with open('logs/'+filename,'a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([ infer_time_modnn, infer_accurancy]) 
+
+############################################################################################################
+print('---------------------------------------------------------')
+print('-----------------------DeepSlicing-----------------------')
+print('---------------------------------------------------------')
+
+ds_devices = []
+
+for d_n in G.neighbors(input_node):
+        ds_devices.append([d_n, G.nodes[m_n]['weight'], G[input_node][d_n]['weight']] )
+
+ds_devices.append([input_node, G.nodes[input_node]['weight'], 0])
+
+num_devices_ds = len(ds_devices)
+
+if num_devices_ds > max_par_partitions[2]:
+    sub_ds_devices = ds_devices[:max_par_partitions[2]]
+    num_devices_ds = len(sub_ds_devices)
+    comp_rate_ds, device_ds, in_throughput_ds = find_split_ratio(sub_ds_devices)
+
+    trans_rate_ds = in_throughput_ds
+
+else:
+    comp_rate_ds, device_ds, in_throughput_ds = find_split_ratio(ds_devices)
+
+    trans_rate_ds = in_throughput_ds
+
+print('comp_rate_ds ',comp_rate_ds)
+print('trans_rate_ds ',trans_rate_ds)
+
+
+# inference ds
+for i in range(0, 2):
+    infer_time_ds = 0
+    infer_accurancy = 0
+    partition_input = []
+    for m in range(0,18):
+        partition = get_partiton_info(m,m,num_devices_ds) #how to split each layer
+        partition_input.append(partition)
+    #     print(partition)
+    # print(partition_input)
+    with torch.no_grad():
+        for j in range(0,2):
+            output,infer_time_ds = opt_deepsclicing(input_batch, partition_input, trans_rate_ds,comp_rate_ds, model)
+            probabilities = torch.nn.functional.softmax(output[0], dim=0)
+            # print(probabilities)
+            print("trans_rate ",trans_rate_ds)
+            print("--------------------------------------------------------")
+            print('infer time ', infer_time_ds)
+            print("--------------------------------------------------------")
+
+
+            with open("opt/imagenet_classes.txt", "r") as f:
+                categories = [s.strip() for s in f.readlines()]
+            # Show top categories per image
+            top5_prob, top5_catid = torch.topk(probabilities, 5)
+            for k in range(top5_prob.size(0)):
+                print(categories[top5_catid[k]], top5_prob[k].item()) 
+            print("--------------------------------------------------------")
+            
+            infer_accurancy = top5_prob[0].item()
+
+    filename = str(num_devices)+'_DS.csv'
+
+
+    with open('logs/'+filename,'a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([ infer_time_ds, infer_accurancy]) 

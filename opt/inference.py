@@ -275,7 +275,7 @@ def opt_DiSNet(in_img, layer_range, input_index, trans_rate, comp_rate, split_ra
         # print("this is t", t)
     return output_tensor, t
 
-
+# MoDNN
 def opt_modnn(in_img, input_index, trans_rate,comp_rate_modnn, model):
     # layers = 10
     layers = 21 
@@ -348,3 +348,77 @@ def opt_modnn(in_img, input_index, trans_rate,comp_rate_modnn, model):
         print("this is t", t)
     return output_tensor, t
 
+
+# DeepSlicing
+def opt_deepsclicing(in_img, input_index, trans_rate,comp_rate_modnn, model):
+    # layers = 10
+    layers = 21 
+    # input size [s1,s2,h1,kernel_size]
+    # kerner_size = [3,3,2,3,3,2,3,3,3,2,3,3,3,2,3,3,3,2,0,0,0]
+    kerner_size = [3,3,2,3,3,2,3,3,3,2,3,3,3,2,3,2,2,2,0,0,0]
+
+    # Total inference time t_h: host inference time t_p: secondary ES inference time
+    t_CLs = 0
+    t_com = 0
+    t_FLs = 0
+    in_tensor = in_img
+    # print(in_tensor.shape)
+    # print(input_index)
+    with torch.no_grad():
+        # Transmission Scheduling
+        for i in range(0,layers):
+            if i < layers-3:
+                out_tensor = []
+                t_sub = []
+                t_sub_com = []
+                # print(input_index[i][0])
+                for j in range(0,len(input_index[i][0])):
+                    if input_index[i][1][j] == 0:
+                        break
+                    in_sub = in_tensor[:,:,input_index[i][0][j][0]:input_index[i][0][j][1]+1,:]
+                    inputsize_sub = in_sub.size()
+                    
+                    t_sub_rec = 32*inputsize_sub[1]*inputsize_sub[2]*inputsize_sub[3]/(1024*1024*trans_rate)
+                    # print(in_sub.shape, i)
+
+                    output_sub, t_sub_cmp = layer_infer(in_sub, model, i)
+                    
+                    outputsize_sub = output_sub.size()
+
+                    if kerner_size[i] == 3:
+                        if j not in [0,8]:
+                            t_sub_send = 32*outputsize_sub[1]*(outputsize_sub[2]-2)*outputsize_sub[3]/(1024*1024*trans_rate)
+                            out_tensor.append(output_sub[:,:,1:-1,:])
+                        elif j == 0:
+                            out_tensor.append(output_sub[:,:,:-1,:])
+                            t_sub_send = 32*outputsize_sub[1]*(outputsize_sub[2]-1)*outputsize_sub[3]/(1024*1024*trans_rate)
+                        else:
+                            out_tensor.append(output_sub[:,:,1:,:])
+                            t_sub_send = 32*outputsize_sub[1]*(outputsize_sub[2]-1)*outputsize_sub[3]/(1024*1024*trans_rate)
+                    elif kerner_size[i] == 2:
+                        t_sub_send = 32*outputsize_sub[1]*outputsize_sub[2]*outputsize_sub[3]/(1024*1024*trans_rate)
+                        out_tensor.append(output_sub)
+                                                                                
+                    t_sub_cmp_proportional = (1 + 0)*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
+
+                    # t_sub_cmp_proportional = (1 + abs(1/3 - (comp_rate_modnn[j]/sum(comp_rate_modnn))))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
+                    
+                    # print(t_sub_cmp_proportional, t_sub_cmp, t_sub_rec, t_sub_send) # more checks later
+                    # t_sub.append(t_sub_rec + t_sub_cmp + t_sub_send)
+                    t_sub.append(t_sub_rec + t_sub_cmp_proportional + t_sub_send)
+                    # t_sub.append(t_sub_rec + t_sub_cmp + t_sub_send)
+                    t_sub_com.append(t_sub_rec + t_sub_send)
+                in_tensor = out_tensor[0]
+                for i in range(len(out_tensor)-1):
+                    in_tensor = torch.cat([in_tensor,out_tensor[i+1]],dim=2)
+                t_com = t_com + max(t_sub_com)
+                t_CLs = t_CLs + max(t_sub)
+            else:
+                output_tensor, t_fl = infer_layer(in_tensor, model, i)
+                # print(output_tensor.shape)
+
+                in_tensor = output_tensor
+                t_FLs = t_FLs + t_fl
+        t = t_CLs + t_FLs
+        print("this is t", t)
+    return output_tensor, t
