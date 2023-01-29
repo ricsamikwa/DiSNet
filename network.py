@@ -39,7 +39,7 @@ def save_graph(G, mesh_network_id):
         file_object.write(serialized)
 
 def read_graph(mesh_network_id):
-    
+
     graph_name = 'network'+str(mesh_network_id)+'.txt'
     # G = pickle.load(open(graph_name, 'rb'))
     with open(graph_name,'rb') as file_object:
@@ -103,7 +103,7 @@ def select_path(G, input_node, output_node):
             #considering both rate and transmission
             #lets take the highest avarage 
 
-            total_weight += G[u][v]['weight']/5 # the number 10 reduces the influence of the transmission in the selection
+            total_weight += G[u][v]['weight']/5 # the number 5 reduces the influence of the transmission in the selection
             total_weight += G.nodes[u]['weight']
 
         #amortized cost of the path

@@ -75,10 +75,11 @@ for the last layer
 
 ####### params
 
-mesh_network_id = 1
-num_runs = 10
+mesh_network_id = 0 #reserve 0 - 2
+num_runs = 1
 num_devices = 10
 num_connections = 15
+save_to_file = False
 
 print("==================Initiating tests===================>")
 
@@ -103,17 +104,17 @@ max_par_partitions = configurations.max_par_partitions
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #different random input and output nodes
 while True:
-    input_node = random.randint(0, 9)
-    output_node = random.randint(0, 9)
+    input_node = random.randint(0, num_devices -1)
+    output_node = random.randint(0, num_devices -1)
     if input_node != output_node:
         break
 
 #                       OR 
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-## if needed keep previous input and output nodes
-input_node = 4
-output_node = 6
+## if needed keep previous input and output nodes [3:5,8]
+# input_node = 8
+# output_node = 2
 
 print('input node : ', input_node)
 print('output node : ', output_node)
@@ -271,10 +272,10 @@ for t in range(0, num_runs):
                 print(categories[top5_catid[k]], top5_prob[k].item()) 
 
         infer_accurancy = top5_prob[0].item()
-
-    with open('logs/'+filename,'a', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow([ infer_time, infer_accurancy])
+    if save_to_file:
+        with open('logs/'+filename,'a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([ infer_time, infer_accurancy])
 
 ############################################################################################################
 print('---------------------------------------------------------')
@@ -290,8 +291,11 @@ modnn_devices.append([input_node, G.nodes[input_node]['weight'], 0])
 
 num_devices_modnn = len(modnn_devices)
 
-if num_devices_modnn > max_par_partitions[2]:
-    sub_modnn_devices = modnn_devices[:max_par_partitions[2]]
+num_splits = max_par_partitions[0]
+# num_splits = 8
+
+if num_devices_modnn > num_splits:
+    sub_modnn_devices = modnn_devices[:num_splits]
     num_devices_modnn = len(sub_modnn_devices)
     comp_rate_modnn, device_modnn, in_throughput_modnn = find_split_ratio(sub_modnn_devices)
 
@@ -309,6 +313,9 @@ filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str
 
 partition_input = []
 for m in range(0,18):
+    if m > 12:
+        if num_devices_modnn > max_par_partitions[3]:
+            num_devices_modnn = max_par_partitions[3]
     partition = get_partiton_info(m,m,num_devices_modnn) #how to split each layer
     partition_input.append(partition)
 #     print(partition)
@@ -341,10 +348,10 @@ for i in range(0, num_runs):
             print("--------------------------------------------------------")
         
         infer_accurancy = top5_prob[0].item()
-
-    with open('logs/'+filename,'a', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow([ infer_time_modnn, infer_accurancy]) 
+    if save_to_file:
+        with open('logs/'+filename,'a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([ infer_time_modnn, infer_accurancy]) 
 
 ############################################################################################################
 print('---------------------------------------------------------')
@@ -359,9 +366,10 @@ for d_n in G.neighbors(input_node):
 ds_devices.append([input_node, G.nodes[input_node]['weight'], 0])
 
 num_devices_ds = len(ds_devices)
+# num_splits = max_par_partitions[0]
 
-if num_devices_ds > max_par_partitions[2]:
-    sub_ds_devices = ds_devices[:max_par_partitions[2]]
+if num_devices_ds > num_splits:
+    sub_ds_devices = ds_devices[:num_splits]
     num_devices_ds = len(sub_ds_devices)
     comp_rate_ds, device_ds, in_throughput_ds = find_split_ratio(sub_ds_devices)
 
@@ -379,6 +387,9 @@ filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str
 
 partition_input = []
 for m in range(0,18):
+    if m > 12:
+        if num_devices_ds > max_par_partitions[3]:
+            num_devices_ds = max_par_partitions[3]
     partition = get_partiton_info(m,m,num_devices_ds) #how to split each layer
     partition_input.append(partition)
 #     print(partition)
@@ -391,7 +402,7 @@ for i in range(0, num_runs):
     
     with torch.no_grad():
         
-        output,infer_time_ds = opt_deepsclicing(input_batch, partition_input, trans_rate_ds,comp_rate_ds, model)
+        output,infer_time_ds = opt_deepsclicing(input_batch, partition_input, trans_rate_ds, configurations.pos_max_par_partitions,comp_rate_ds, model)
         probabilities = torch.nn.functional.softmax(output[0], dim=0)
         # print(probabilities)
         if i == 0:
@@ -412,6 +423,7 @@ for i in range(0, num_runs):
         
         infer_accurancy = top5_prob[0].item()
 
-    with open('logs/'+filename,'a', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow([ infer_time_ds, infer_accurancy]) 
+    if save_to_file:
+        with open('logs/'+filename,'a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([ infer_time_ds, infer_accurancy]) 

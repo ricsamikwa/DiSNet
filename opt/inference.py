@@ -210,8 +210,10 @@ def opt_DiSNet(in_img, layer_range, input_index, trans_rate, comp_rate, split_ra
     # print(layers_start)
 
     with torch.no_grad():
+
         # Transmission Scheduling
         for i in range(0,layers_iter):
+            
             p = layers_start + i
             # print(p)
             if p < layers-3:
@@ -221,14 +223,19 @@ def opt_DiSNet(in_img, layer_range, input_index, trans_rate, comp_rate, split_ra
                 # print(i)
                 # print(input_index[i][0])
                 for j in range(0,len(input_index[i][0])):
-                    # print(input_index[i][1][j])
+                    # print(len(input_index[i][0]))
+                    t_sub_rec = 0
+                    t_sub_send = 0
+
                     if input_index[i][1][j] == 0:
                         break
                     # print(input_index[i][0][j][0],input_index[i][0][j][1]+1)
                     in_sub = in_tensor[:,:,input_index[i][0][j][0]:input_index[i][0][j][1]+1,:]
                     inputsize_sub = in_sub.size()
                     
-                    t_sub_rec = 32*inputsize_sub[1]*inputsize_sub[2]*inputsize_sub[3]/(1024*1024*trans_rate)
+                    if i == 0:
+                        # print('receiving data for partition')
+                        t_sub_rec = 32*inputsize_sub[1]*inputsize_sub[2]*inputsize_sub[3]/(1024*1024*trans_rate)
                     
                     # say this is running on diffent devices at different speeds
                     output_sub, t_sub_cmp = infer_layer(in_sub, model, p)
@@ -238,17 +245,23 @@ def opt_DiSNet(in_img, layer_range, input_index, trans_rate, comp_rate, split_ra
 
                     #this ------- shit
                     if kerner_size[p] == 3:
-                        # problem ?
+                        
                         if j not in [0,8]:
+                            ### sychronication part not per layer!!!
+                            # if i == layers_iter - 1:
                             t_sub_send = 32*outputsize_sub[1]*(outputsize_sub[2]-2)*outputsize_sub[3]/(1024*1024*trans_rate)
                             out_tensor.append(output_sub[:,:,1:-1,:])
                         elif j == 0:
                             out_tensor.append(output_sub[:,:,:-1,:])
+                            # if i == layers_iter - 1:
                             t_sub_send = 32*outputsize_sub[1]*(outputsize_sub[2]-1)*outputsize_sub[3]/(1024*1024*trans_rate)
                         else:
                             out_tensor.append(output_sub[:,:,1:,:])
+                            # if i == layers_iter - 1:
                             t_sub_send = 32*outputsize_sub[1]*(outputsize_sub[2]-1)*outputsize_sub[3]/(1024*1024*trans_rate)
                     elif kerner_size[p] == 2:
+
+                        # if i == layers_iter - 1:
                         t_sub_send = 32*outputsize_sub[1]*outputsize_sub[2]*outputsize_sub[3]/(1024*1024*trans_rate)
                         out_tensor.append(output_sub)
                     
@@ -327,7 +340,7 @@ def opt_modnn(in_img, input_index, trans_rate,comp_rate_modnn, model):
                                         
                     # t_sub_cmp_proportional = (1 + (abs(comp_rate_modnn[j]-comp_rate_modnn[j])/comp_rate_modnn[j]))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
 
-                    t_sub_cmp_proportional = (1 + abs(1/3 - (comp_rate_modnn[j]/sum(comp_rate_modnn))))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
+                    t_sub_cmp_proportional = (1 + abs(1/len(comp_rate_modnn) - (comp_rate_modnn[j]/sum(comp_rate_modnn))))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
                     # print(t_sub_cmp_proportional, t_sub_cmp, t_sub_rec, t_sub_send) # more checks later
                     # t_sub.append(t_sub_rec + t_sub_cmp + t_sub_send)
                     t_sub.append(t_sub_rec + t_sub_cmp_proportional + t_sub_send)
@@ -350,7 +363,7 @@ def opt_modnn(in_img, input_index, trans_rate,comp_rate_modnn, model):
 
 
 # DeepSlicing
-def opt_deepsclicing(in_img, input_index, trans_rate,comp_rate_modnn, model):
+def opt_deepsclicing(in_img, input_index, trans_rate,pos_max_par_partitions,comp_rate_modnn, model):
     # layers = 10
     layers = 21 
     # input size [s1,s2,h1,kernel_size]
@@ -366,19 +379,31 @@ def opt_deepsclicing(in_img, input_index, trans_rate,comp_rate_modnn, model):
     # print(input_index)
     with torch.no_grad():
         # Transmission Scheduling
+       
+        pointer = 0
         for i in range(0,layers):
+             
+            das_flag = False
+            t_sub_rec = 0
+            t_sub_send = 0
+            
             if i < layers-3:
                 out_tensor = []
                 t_sub = []
                 t_sub_com = []
                 # print(input_index[i][0])
+               
+                
                 for j in range(0,len(input_index[i][0])):
+
+                    
                     if input_index[i][1][j] == 0:
                         break
                     in_sub = in_tensor[:,:,input_index[i][0][j][0]:input_index[i][0][j][1]+1,:]
                     inputsize_sub = in_sub.size()
                     
-                    t_sub_rec = 32*inputsize_sub[1]*inputsize_sub[2]*inputsize_sub[3]/(1024*1024*trans_rate)
+                    if i == pos_max_par_partitions[pointer] | i == 0:
+                        t_sub_rec = 32*inputsize_sub[1]*inputsize_sub[2]*inputsize_sub[3]/(1024*1024*trans_rate)
                     # print(in_sub.shape, i)
 
                     output_sub, t_sub_cmp = layer_infer(in_sub, model, i)
@@ -387,15 +412,19 @@ def opt_deepsclicing(in_img, input_index, trans_rate,comp_rate_modnn, model):
 
                     if kerner_size[i] == 3:
                         if j not in [0,8]:
+                            # if i == pos_max_par_partitions[pointer]:
                             t_sub_send = 32*outputsize_sub[1]*(outputsize_sub[2]-2)*outputsize_sub[3]/(1024*1024*trans_rate)
                             out_tensor.append(output_sub[:,:,1:-1,:])
                         elif j == 0:
                             out_tensor.append(output_sub[:,:,:-1,:])
+                            # if i == pos_max_par_partitions[pointer]:
                             t_sub_send = 32*outputsize_sub[1]*(outputsize_sub[2]-1)*outputsize_sub[3]/(1024*1024*trans_rate)
                         else:
                             out_tensor.append(output_sub[:,:,1:,:])
+                            # if i == pos_max_par_partitions[pointer]:
                             t_sub_send = 32*outputsize_sub[1]*(outputsize_sub[2]-1)*outputsize_sub[3]/(1024*1024*trans_rate)
                     elif kerner_size[i] == 2:
+                        # if i == pos_max_par_partitions[pointer]:
                         t_sub_send = 32*outputsize_sub[1]*outputsize_sub[2]*outputsize_sub[3]/(1024*1024*trans_rate)
                         out_tensor.append(output_sub)
                                                                                 
@@ -419,6 +448,9 @@ def opt_deepsclicing(in_img, input_index, trans_rate,comp_rate_modnn, model):
 
                 in_tensor = output_tensor
                 t_FLs = t_FLs + t_fl
+
+            if i == pos_max_par_partitions[pointer]:
+                pointer = pointer + 1
         t = t_CLs + t_FLs
         # print("this is t", t)
     return output_tensor, t

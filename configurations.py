@@ -34,7 +34,9 @@ split_layer = [6, 6]
 model_len = 7 #
 
 # max parallelisable partitions in integers [1-4:5, 5-9:4, 10-14:3, 14-18:2]
-max_par_partitions = [5,4,3,2] # based on the neural network DAG
+max_par_partitions = [6,5,4,3] # based on the neural network DAG [6,5,4,3]
+# max_par_partitions = [5,4,3,2]
+pos_max_par_partitions = [4,9,12,18] # based on the neural network[4,8,12,18] [4,9,14,18]
 layer_range = np.array([[0,4],[4,9],[9,14],[14,18]]) #very unreadable
 
 
