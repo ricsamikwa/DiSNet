@@ -7,10 +7,13 @@ import numpy as np
 import os
 from field_vgg import FieldCalculator
 from field_DiSNet import FieldCalculatorDiSNet
+import configurations
+device_pace_rate = configurations.rate
+
 o_path = os.getcwd()
 sys.path.append(o_path)
 
-DEVICE_PACE_RATE = 10 #this needs investigation
+ #this needs investigation
 
 def infer_block(in_tensor, start_layer, end_layer, model):
     cmp_time = []
@@ -42,11 +45,11 @@ def infer_layer(in_tensor,model,layer_num):
         start_infer = time.time()
         # out_tensor = model([in_tensor,layer_num])
 
-        for i in range(0,100):
+        for i in range(0,10):
             out_tensor = model([in_tensor,layer_num])
         end_infer = time.time()
     # infer_time = end_infer-start_infer
-    infer_time = (end_infer-start_infer)/100
+    infer_time = (end_infer-start_infer)/10
 
     return out_tensor, infer_time
 
@@ -266,7 +269,7 @@ def opt_DiSNet(in_img, layer_range, input_index, trans_rate, comp_rate, split_ra
                         out_tensor.append(output_sub)
                     
                     #this is per layer 
-                    t_sub_cmp_proportional = (1 + (abs(split_ratio[j]-comp_rate[j])/comp_rate[j]))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
+                    t_sub_cmp_proportional = (1 + (abs(split_ratio[j]-comp_rate[j])/comp_rate[j]))*t_sub_cmp*device_pace_rate#times slowness comparison
                     # print(t_sub_cmp_proportional, t_sub_cmp, t_sub_rec, t_sub_send) # more checks later
                     # t_sub.append(t_sub_rec + t_sub_cmp + t_sub_send)
                     t_sub.append(t_sub_rec + t_sub_cmp_proportional + t_sub_send)
@@ -286,7 +289,7 @@ def opt_DiSNet(in_img, layer_range, input_index, trans_rate, comp_rate, split_ra
                 t_FLs = t_FLs + t_fl
         t = t_CLs + t_FLs
         # print("this is t", t)
-    return output_tensor, t
+    return output_tensor, t/device_pace_rate
 
 # MoDNN
 def opt_modnn(in_img, input_index, trans_rate,comp_rate_modnn, model):
@@ -340,7 +343,7 @@ def opt_modnn(in_img, input_index, trans_rate,comp_rate_modnn, model):
                                         
                     # t_sub_cmp_proportional = (1 + (abs(comp_rate_modnn[j]-comp_rate_modnn[j])/comp_rate_modnn[j]))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
 
-                    t_sub_cmp_proportional = (1 + abs(1/len(comp_rate_modnn) - (comp_rate_modnn[j]/sum(comp_rate_modnn))))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
+                    t_sub_cmp_proportional = (1 + abs(1/len(comp_rate_modnn) - (comp_rate_modnn[j]/sum(comp_rate_modnn))))*t_sub_cmp*device_pace_rate#times slowness comparison
                     # print(t_sub_cmp_proportional, t_sub_cmp, t_sub_rec, t_sub_send) # more checks later
                     # t_sub.append(t_sub_rec + t_sub_cmp + t_sub_send)
                     t_sub.append(t_sub_rec + t_sub_cmp_proportional + t_sub_send)
@@ -359,7 +362,7 @@ def opt_modnn(in_img, input_index, trans_rate,comp_rate_modnn, model):
                 t_FLs = t_FLs + t_fl
         t = t_CLs + t_FLs
         # print("this is t", t)
-    return output_tensor, t
+    return output_tensor, t/device_pace_rate
 
 
 # DeepSlicing
@@ -428,7 +431,7 @@ def opt_deepsclicing(in_img, input_index, trans_rate,pos_max_par_partitions,comp
                         t_sub_send = 32*outputsize_sub[1]*outputsize_sub[2]*outputsize_sub[3]/(1024*1024*trans_rate)
                         out_tensor.append(output_sub)
                                                                                 
-                    t_sub_cmp_proportional = (1 + 0)*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
+                    t_sub_cmp_proportional = (1 + 0)*t_sub_cmp*device_pace_rate#times slowness comparison
 
                     # t_sub_cmp_proportional = (1 + abs(1/3 - (comp_rate_modnn[j]/sum(comp_rate_modnn))))*t_sub_cmp*DEVICE_PACE_RATE#times slowness comparison
                     
@@ -453,4 +456,4 @@ def opt_deepsclicing(in_img, input_index, trans_rate,pos_max_par_partitions,comp
                 pointer = pointer + 1
         t = t_CLs + t_FLs
         # print("this is t", t)
-    return output_tensor, t
+    return output_tensor, t/device_pace_rate

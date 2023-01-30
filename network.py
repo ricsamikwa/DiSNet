@@ -33,14 +33,14 @@ def save_graph(G, mesh_network_id):
 
     # pickle.dump(G, open(graph_name, 'wb'))
     serialized = pickle.dumps(G)
-    graph_name = 'network'+str(mesh_network_id)+'.txt'
+    graph_name = 'networks/network'+str(mesh_network_id)+'.txt'
 
     with open(graph_name,'wb') as file_object:
         file_object.write(serialized)
 
 def read_graph(mesh_network_id):
 
-    graph_name = 'network'+str(mesh_network_id)+'.txt'
+    graph_name = 'networks/network'+str(mesh_network_id)+'.txt'
     # G = pickle.load(open(graph_name, 'rb'))
     with open(graph_name,'rb') as file_object:
         raw_data = file_object.read()

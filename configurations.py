@@ -32,6 +32,9 @@ model_size = 1.28
 # split_layer = [2, 3, 2] 
 split_layer = [6, 6] 
 model_len = 7 #
+DEVICE_PACE_RATE = 10
+#also
+rate = 10
 
 # max parallelisable partitions in integers [1-4:5, 5-9:4, 10-14:3, 14-18:2]
 max_par_partitions = [6,5,4,3] # based on the neural network DAG [6,5,4,3]

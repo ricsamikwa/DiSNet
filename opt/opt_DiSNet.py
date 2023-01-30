@@ -42,6 +42,7 @@ model_dict = model.state_dict()
 model_dict.update(torch.load("opt/vgg16-modify.pth"))
 model.load_state_dict(model_dict)
 model.eval()
+device_pace_rate = configurations.DEVICE_PACE_RATE 
 
 
 if torch.cuda.is_available():
@@ -75,7 +76,7 @@ for the last layer
 
 ####### params
 
-mesh_network_id = 0 #reserve 0 - 2
+mesh_network_id = 3 #reserve 0 - 2
 num_runs = 1
 num_devices = 10
 num_connections = 15
@@ -112,9 +113,10 @@ while True:
 #                       OR 
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-## if needed keep previous input and output nodes [3:5,8]
-# input_node = 8
-# output_node = 2
+## if needed keep previous input and output nodes 
+# [0:9,6;5,9;1,2;1,8;6,9][2:0,9;[3:5,8]
+input_node = 5
+output_node = 8
 
 print('input node : ', input_node)
 print('output node : ', output_node)
@@ -247,7 +249,7 @@ for t in range(0, num_runs):
                     fowrd_trans_time = trans_time_forward(output, trans_rate_forward[j],layer_range[j])
 
                 
-            # fowrd_trans_time = 0
+            fowrd_trans_time = fowrd_trans_time/device_pace_rate
             trans_time_seq.append(fowrd_trans_time)
             if t == 0:
                 print('trans time forward ', fowrd_trans_time)
