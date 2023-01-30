@@ -76,11 +76,12 @@ for the last layer
 
 ####### params
 
-mesh_network_id = 3 #reserve 0 - 2
-num_runs = 1
+mesh_network_id = 0 #reserve 0 - 2
+num_runs = 100
 num_devices = 10
 num_connections = 15
-save_to_file = False
+name_maker = 12
+save_to_file = True
 
 print("==================Initiating tests===================>")
 
@@ -114,9 +115,9 @@ while True:
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ## if needed keep previous input and output nodes 
-# [0:9,6;5,9;1,2;1,8;6,9][2:0,9;[3:5,8]
-input_node = 5
-output_node = 8
+# [0:8,4 - num nodes][2:0,9;[3:5,8 - acc]
+input_node = 8
+output_node = 4
 
 print('input node : ', input_node)
 print('output node : ', output_node)
@@ -215,7 +216,11 @@ print(partition_input)
 print("===================Inference operations====================>")
 
 comp_rate = split_ratio
-filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_DiSNet.csv'
+# filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_DiSNet.csv'
+filename = str(mesh_network_id)+'_'+str(name_maker)+'_DiSNet.csv'
+
+# num devices run 
+# name_maker
 
 for t in range(0, num_runs):
     #holders
@@ -311,7 +316,8 @@ else:
 print('comp_rate_modnn ',comp_rate_modnn)
 print('trans_rate_modnn ',trans_rate_modnn)
 
-filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_MODNN.csv'
+# filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_MODNN.csv'
+filename = str(mesh_network_id)+'_'+str(name_maker)+'_MODNN.csv'
 
 partition_input = []
 for m in range(0,18):
@@ -385,7 +391,8 @@ else:
 print('comp_rate_ds ',comp_rate_ds)
 print('trans_rate_ds ',trans_rate_ds)
 
-filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_DeepSlicing.csv'
+# filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_DeepSlicing.csv'
+filename = str(mesh_network_id)+'_'+str(name_maker)+'_DeepSlicing.csv'
 
 partition_input = []
 for m in range(0,18):
