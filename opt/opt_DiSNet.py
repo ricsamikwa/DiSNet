@@ -76,12 +76,12 @@ for the last layer
 
 ####### params
 
-mesh_network_id = 0 #reserve 0 - 2
-num_runs = 100
+mesh_network_id = 2 #reserve 0 - 2
+num_runs = 1
 num_devices = 10
 num_connections = 15
-name_maker = 12
-save_to_file = True
+# name_maker = 2
+save_to_file = False
 
 print("==================Initiating tests===================>")
 
@@ -115,9 +115,9 @@ while True:
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ## if needed keep previous input and output nodes 
-# [0:8,4 - num nodes][2:0,9;[3:5,8 - acc]
-input_node = 8
-output_node = 4
+# [0:8,4 - num nodes][1:9,7;2,1;2,0;4,5;0,7;1,0][2:0,9;4,1;7,5;6,4;6,1;6,0;6,8][3:5,8 - acc]
+# input_node = 1
+# output_node = 6
 
 print('input node : ', input_node)
 print('output node : ', output_node)
@@ -216,8 +216,8 @@ print(partition_input)
 print("===================Inference operations====================>")
 
 comp_rate = split_ratio
-# filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_DiSNet.csv'
-filename = str(mesh_network_id)+'_'+str(name_maker)+'_DiSNet.csv'
+filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_DiSNet.csv'
+# filename = str(mesh_network_id)+'_'+str(name_maker)+'_DiSNet.csv'
 
 # num devices run 
 # name_maker
@@ -316,8 +316,8 @@ else:
 print('comp_rate_modnn ',comp_rate_modnn)
 print('trans_rate_modnn ',trans_rate_modnn)
 
-# filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_MODNN.csv'
-filename = str(mesh_network_id)+'_'+str(name_maker)+'_MODNN.csv'
+filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_MODNN.csv'
+# filename = str(mesh_network_id)+'_'+str(name_maker)+'_MODNN.csv'
 
 partition_input = []
 for m in range(0,18):
@@ -391,8 +391,8 @@ else:
 print('comp_rate_ds ',comp_rate_ds)
 print('trans_rate_ds ',trans_rate_ds)
 
-# filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_DeepSlicing.csv'
-filename = str(mesh_network_id)+'_'+str(name_maker)+'_DeepSlicing.csv'
+filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_DeepSlicing.csv'
+# filename = str(mesh_network_id)+'_'+str(name_maker)+'_DeepSlicing.csv'
 
 partition_input = []
 for m in range(0,18):

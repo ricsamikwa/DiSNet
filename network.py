@@ -89,7 +89,7 @@ def draw_graph(G, mesh_network_id):
     nx.draw_networkx_edge_labels(G, pos, edge_labels={(u, v): G[u][v]['weight'] for u, v in G.edges()})
     nx.draw_networkx_labels(G, pos, labels={i: f"{i} ({G.nodes[i]['weight']})" for i in G.nodes()})
 
-    graph_name = 'network'+str(mesh_network_id)+'.png'
+    graph_name = 'networks/network'+str(mesh_network_id)+'.png'
     plt.savefig(graph_name)
     # plt.show()
 def select_path(G, input_node, output_node):
