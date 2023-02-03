@@ -77,15 +77,15 @@ for the last layer
 ####### params
 
 mesh_network_id = 1 #reserve 0 - 3
-num_runs = 1
+num_runs = 100
 num_devices = 10
 num_connections = 15
-# name_maker = 2
-save_to_file = False
+# name_maker = 12
+save_to_file = True
 
 # energy flags
-energy_flag = False
-energy_sensitivity = 1 # 0 more energy focus, 1 more latency focus
+# energy_flag = False
+energy_sensitivity = 0 # 0 more energy focus, 1 more latency focus
 
 print("==================Initiating tests===================>")
 
@@ -120,9 +120,9 @@ while True:
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ## if needed keep previous input and output nodes 
 # [0:8,4 - num nodes][1:9,7;2,1;2,0;4,5;0,7;1,0][2:0,9;4,1;7,5;6,4;6,1;6,8][3:5,8-acc;6,0;9,2;9,8;6,7;3,5]
-#6 - 8 good example for energy
-input_node = 7
-output_node = 5
+#2: 6, 8 and 8, 4 [ num 8] good example for energy and acc
+input_node = 8
+output_node = 4
 
 print('input node : ', input_node)
 print('output node : ', output_node)
@@ -224,8 +224,8 @@ print(partition_input)
 print("===================Inference operations====================>")
 
 comp_rate = split_ratio
-filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_DiSNet.csv'
-# filename = str(mesh_network_id)+'_'+str(name_maker)+'_DiSNet.csv'
+filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_'+str(energy_sensitivity)+'_DiSNet.csv'
+# filename = str(mesh_network_id)+'_'+str(name_maker)+'_'+str(energy_sensitivity)+'_DiSNet.csv'
 
 # num devices run 
 # name_maker
@@ -294,7 +294,8 @@ for t in range(0, num_runs):
 
         infer_accurancy = top5_prob[0].item()
         top5_accurancy = sum(top5_prob).item()
-        print('+++>top 5 acc: ',sum(top5_prob).item())
+        if t == 0:
+            print('+++>top 5 acc: ',sum(top5_prob).item())
     if save_to_file:
         with open('logs/'+filename,'a', newline='') as file:
             writer = csv.writer(file)
@@ -332,8 +333,8 @@ else:
 print('comp_rate_modnn ',comp_rate_modnn)
 print('trans_rate_modnn ',trans_rate_modnn)
 
-filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_MODNN.csv'
-# filename = str(mesh_network_id)+'_'+str(name_maker)+'_MODNN.csv'
+filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_'+str(energy_sensitivity)+'_MODNN.csv'
+# filename = str(mesh_network_id)+'_'+str(name_maker)+'_'+str(energy_sensitivity)+'_MODNN.csv'
 
 partition_input = []
 for m in range(0,18):
@@ -358,7 +359,7 @@ for i in range(0, num_runs):
         probabilities = torch.nn.functional.softmax(output[0], dim=0)
         # print(probabilities)
         
-        infer_energy = partition_energy_modified(device_modnn,infer_time_modnn,sub_trans_time)
+        infer_energy = partition_energy(device_modnn,infer_time_modnn,sub_trans_time)
 
         
         if i == 0:
@@ -417,8 +418,8 @@ else:
 print('comp_rate_ds ',comp_rate_ds)
 print('trans_rate_ds ',trans_rate_ds)
 
-filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_DeepSlicing.csv'
-# filename = str(mesh_network_id)+'_'+str(name_maker)+'_DeepSlicing.csv'
+filename = str(mesh_network_id)+'_'+str(num_devices)+'_'+str(input_node)+'_'+str(output_node)+'_'+str(energy_sensitivity)+'_DeepSlicing.csv'
+# filename = str(mesh_network_id)+'_'+str(name_maker)+'_'+str(energy_sensitivity)+'_DeepSlicing.csv'
 
 partition_input = []
 for m in range(0,18):
@@ -441,7 +442,7 @@ for i in range(0, num_runs):
         probabilities = torch.nn.functional.softmax(output[0], dim=0)
         # print(probabilities)
 
-        infer_energy = partition_energy_modified(device_ds,infer_time_ds,sub_trans_time)
+        infer_energy = partition_energy(device_ds,infer_time_ds,sub_trans_time)
 
 
         if i == 0:

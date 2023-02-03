@@ -104,16 +104,6 @@ def power_details(node_num):
     comp_power = 0
     trans_power = 0
 
-    # if node_num <= device_power_groups[0]:
-    #     comp_power = norm_comp_powers[0]
-    #     trans_power = norm_trans_powers[0]
-    # elif node_num > device_power_groups[0] & node_num <= device_power_groups[1]:
-    #     comp_power = norm_comp_powers[1]
-    #     trans_power = norm_trans_powers[1]
-    # else:
-    #     comp_power = norm_comp_powers[2]
-    #     trans_power = norm_trans_powers[2]
-    # print(comp_powers)
     if node_num <= device_power_groups[0]:
         comp_power = norm_comp_powers[0]
         trans_power = norm_trans_powers[0]
@@ -123,6 +113,25 @@ def power_details(node_num):
     else:
         comp_power = norm_comp_powers[2]
         trans_power = norm_trans_powers[2]
+    
+    return comp_power, trans_power
+
+def power_details_denorm(node_num):
+    comp_power = 0
+    trans_power = 0
+
+    trans_powers = configurations.trans_powers
+    comp_powers = configurations.comp_powers
+    
+    if node_num <= device_power_groups[0]:
+        comp_power = comp_powers[0]
+        trans_power = trans_powers[0]
+    elif node_num > device_power_groups[0] & node_num <= device_power_groups[1]:
+        comp_power = comp_powers[1]
+        trans_power = trans_powers[1]
+    else:
+        comp_power = comp_powers[2]
+        trans_power = trans_powers[2]
     
     return comp_power, trans_power
 
@@ -206,7 +215,7 @@ def partition_energy_modified(device_modnn,infer_time_modnn,sub_trans_time):
     partition_energy = 0
     sub_infer_time = infer_time_modnn - sub_trans_time
     for device in device_modnn:
-        comp_power, trans_power = power_details(device)
+        comp_power, trans_power = power_details_denorm(device)
         partition_energy += sub_infer_time*comp_power + sub_trans_time*trans_power
 
     return partition_energy
