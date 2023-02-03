@@ -37,8 +37,8 @@ DEVICE_PACE_RATE = 10
 rate = 10
 
 # max parallelisable partitions in integers [1-4:5, 5-9:4, 10-14:3, 14-18:2]
-# max_par_partitions = [6,5,4,3] # based on the neural network DAG [6,5,4,3][5,4,3,2]
-max_par_partitions = [6,6,4,3] 
+max_par_partitions = [6,5,4,3] # based on the neural network DAG [6,5,4,3][5,4,3,2]
+# max_par_partitions = [6,6,4,3] 
 ## num dev test  2: [2,2,2,2] 3: [3,3,2,2] 4: [3,3,3,3] 5: [4,3,3,3] 
 # 6: [4,4,3,3] 7: [5,4,3,3] 8: [5,4,4,3] 9: [5,5,4,3] 10: [6,5,4,3] 11: [6,6,4,3] 12: [7,7,4,3]
 
