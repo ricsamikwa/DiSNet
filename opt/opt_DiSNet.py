@@ -76,16 +76,16 @@ for the last layer
 
 ####### params
 
-mesh_network_id = 3 #reserve 0 - 3
-num_runs = 100
+mesh_network_id = 2 #reserve 0 - 3
+num_runs = 1
 num_devices = 10
 num_connections = 15
 # name_maker = 12
-save_to_file = True
+save_to_file = False
 
 # energy flags
 # energy_flag = False
-energy_sensitivity = 0 # 0 more energy focus, 1 more latency focus
+energy_sensitivity = 0.5 # 0 more energy focus, 1 more latency focus
 
 print("==================Initiating tests===================>")
 
@@ -121,8 +121,8 @@ while True:
 ## if needed keep previous input and output nodes 
 # [0:8,4 - num nodes][1:9,7;2,1;2,0;4,5;0,7;1,0][2:0,9;4,1;7,5;6,4;6,1;6,8][3:5,8-acc;6,0;9,2;9,8;6,7;3,5]
 #2: 6, 8 and 8, 4 [ num 8] good example for energy and acc
-input_node = 3
-output_node = 5
+input_node = 6
+output_node = 4
 
 print('input node : ', input_node)
 print('output node : ', output_node)
