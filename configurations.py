@@ -42,6 +42,30 @@ max_par_partitions = [6,5,4,3] # based on the neural network DAG [6,5,4,3][5,4,3
 ## num dev test  2: [2,2,2,2] 3: [3,3,2,2] 4: [3,3,3,3] 5: [4,3,3,3] 
 # 6: [4,4,3,3] 7: [5,4,3,3] 8: [5,4,4,3] 9: [5,5,4,3] 10: [6,5,4,3] 11: [6,6,4,3] 12: [7,7,4,3]
 
+## measurements
+# MAXN comp: 7253.297700323392
+# MAXN trans: 2319.590057210495
+# MAXN rec: 2260.3782324677427
+# 5W comp: 4204.6259168704155
+# 5W trans: 1917.0524958555905
+# 5W rec: 1912.4423741971912
+# CUSTOM comp: 2396.2112226277372
+# CUSTOM trans: 1754.1256388811448
+# CUSTOM rec: 1755.296656187482
+
+# computation_power = 7253
+# transmission_power = 2319
+# receiving_power = 2260
+
+# computation_power = 3800
+# transmission_power = 1100
+# receiving_power = 800
+
+trans_powers = [1.1, 0.8, 1.7]
+comp_powers = [7.2, 3.8, 4.2]
+device_power_groups = [3, 7, 10]
+
+
 pos_max_par_partitions = [4,9,12,18] # based on the neural network[4,8,12,18] [4,9,14,18]
 layer_range = np.array([[0,4],[4,9],[9,14],[14,18]]) #very unreadable
 

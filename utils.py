@@ -54,3 +54,4 @@ def find_split_ratio(current_neighbours):
   throughput = sum(trans_rate) / len(trans_rate)
 
   return split_ratio, nodes, throughput
+   

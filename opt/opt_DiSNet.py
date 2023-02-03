@@ -76,12 +76,16 @@ for the last layer
 
 ####### params
 
-mesh_network_id = 2 #reserve 0 - 3
+mesh_network_id = 1 #reserve 0 - 3
 num_runs = 1
 num_devices = 10
 num_connections = 15
 # name_maker = 2
 save_to_file = False
+
+# energy flags
+energy_flag = False
+energy_sensitivity = 1 # 0 more energy focus, 1 more latency focus
 
 print("==================Initiating tests===================>")
 
@@ -116,8 +120,9 @@ while True:
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ## if needed keep previous input and output nodes 
 # [0:8,4 - num nodes][1:9,7;2,1;2,0;4,5;0,7;1,0][2:0,9;4,1;7,5;6,4;6,1;6,8][3:5,8-acc;6,0;9,2;9,8;6,7;3,5]
-# input_node = 6
-# output_node = 8
+#6 - 8 good example for energy
+input_node = 7
+output_node = 5
 
 print('input node : ', input_node)
 print('output node : ', output_node)
@@ -129,7 +134,10 @@ print("==================All possible routes====================>")
 
 print(all_paths_with_weights(G, input_node, output_node))
 
-selected_path = select_path(G, input_node, output_node)
+
+
+selected_path = select_path(G, input_node, output_node, energy_sensitivity)
+
 print('==================>selected path :', selected_path)
 
 current_point_on_path = 0
@@ -146,7 +154,7 @@ for i in range(0, len(max_par_partitions)):
     ### check here if there is a better neighbourhood <---> and update current_point_on_path
     ### selecting the best of the remaining ones always
     ### add calculation for going to the best neighbours
-    p = determine_opt_neighbours(G, selected_path, current_max_par_partitions, current_point_on_path)
+    p = determine_opt_neighbours(G, selected_path, current_max_par_partitions, current_point_on_path, energy_sensitivity)
     execution_path.append(p)
     current_point_on_path = selected_path.index(p)
     # p = selected_path[current_point_on_path]
@@ -226,6 +234,8 @@ for t in range(0, num_runs):
     #holders
     infer_time = 0
     infer_accurancy = 0
+    infer_energy = 0
+
     if t == 0:
         print("++++++++++++++++++++++++RUN : ", t)
 
@@ -255,6 +265,9 @@ for t in range(0, num_runs):
 
                 
             fowrd_trans_time = fowrd_trans_time/device_pace_rate
+
+            infer_energy += partition_energy(devices[j],sub_infer_time,fowrd_trans_time)
+            
             trans_time_seq.append(fowrd_trans_time)
             if t == 0:
                 print('trans time forward ', fowrd_trans_time)
@@ -267,6 +280,7 @@ for t in range(0, num_runs):
         if t == 0:
             print("--------------------------------------------------------")            
             print('End to end inference time ', infer_time)
+            print('energy consumption ', infer_energy)
             print("========================================================")
 
         probabilities = torch.nn.functional.softmax(output[0], dim=0)
@@ -279,10 +293,12 @@ for t in range(0, num_runs):
                 print(categories[top5_catid[k]], top5_prob[k].item()) 
 
         infer_accurancy = top5_prob[0].item()
+        top5_accurancy = sum(top5_prob).item()
+        print('+++>top 5 acc: ',sum(top5_prob).item())
     if save_to_file:
         with open('logs/'+filename,'a', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow([ infer_time, infer_accurancy])
+            writer.writerow([ infer_time,infer_energy, infer_accurancy, top5_accurancy])
 
 ############################################################################################################
 print('---------------------------------------------------------')
@@ -333,16 +349,23 @@ for m in range(0,18):
 for i in range(0, num_runs):
     infer_time_modnn = 0
     infer_accurancy = 0
+    top5_accurancy =0
+    infer_energy = 0
     
     with torch.no_grad():
 
-        output,infer_time_modnn = opt_modnn(input_batch, partition_input, trans_rate_modnn,comp_rate_modnn, model)
+        output,infer_time_modnn,sub_trans_time = opt_modnn(input_batch, partition_input, trans_rate_modnn,comp_rate_modnn, model)
         probabilities = torch.nn.functional.softmax(output[0], dim=0)
         # print(probabilities)
+        
+        infer_energy = partition_energy_modified(device_modnn,infer_time_modnn,sub_trans_time)
+
+        
         if i == 0:
             # print("trans_rate ",trans_rate_modnn)
             print("--------------------------------------------------------")
             print('infer time ', infer_time_modnn)
+            print('energy consumption ', infer_energy)
             print("--------------------------------------------------------")
 
 
@@ -356,10 +379,13 @@ for i in range(0, num_runs):
             print("--------------------------------------------------------")
         
         infer_accurancy = top5_prob[0].item()
+        top5_accurancy = sum(top5_prob).item()
+        if i == 0:
+            print('+++>top 5 acc: ',sum(top5_prob).item())
     if save_to_file:
         with open('logs/'+filename,'a', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow([ infer_time_modnn, infer_accurancy]) 
+            writer.writerow([ infer_time_modnn, infer_energy, infer_accurancy, top5_accurancy]) 
 
 ############################################################################################################
 print('---------------------------------------------------------')
@@ -411,13 +437,18 @@ for i in range(0, num_runs):
     
     with torch.no_grad():
         
-        output,infer_time_ds = opt_deepsclicing(input_batch, partition_input, trans_rate_ds, configurations.pos_max_par_partitions,comp_rate_ds, model)
+        output,infer_time_ds, sub_trans_time = opt_deepsclicing(input_batch, partition_input, trans_rate_ds, configurations.pos_max_par_partitions,comp_rate_ds, model)
         probabilities = torch.nn.functional.softmax(output[0], dim=0)
         # print(probabilities)
+
+        infer_energy = partition_energy_modified(device_ds,infer_time_ds,sub_trans_time)
+
+
         if i == 0:
             print("trans_rate ",trans_rate_ds)
             print("--------------------------------------------------------")
             print('infer time ', infer_time_ds)
+            print('energy consumption ', infer_energy)
             print("--------------------------------------------------------")
 
 
@@ -431,8 +462,11 @@ for i in range(0, num_runs):
             print("--------------------------------------------------------")
         
         infer_accurancy = top5_prob[0].item()
+        top5_accurancy = sum(top5_prob).item()
+        if i == 0:
+            print('+++>top 5 acc: ',sum(top5_prob).item())
 
     if save_to_file:
         with open('logs/'+filename,'a', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow([ infer_time_ds, infer_accurancy]) 
+            writer.writerow([ infer_time_ds, infer_energy, infer_accurancy, top5_accurancy]) 

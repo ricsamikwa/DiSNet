@@ -2,8 +2,16 @@ import networkx as nx
 import random
 import matplotlib.pyplot as plt
 import pickle
+import numpy as np
+import configurations
 from utils import select_subset_neighbours
 
+trans_powers = configurations.trans_powers
+comp_powers = configurations.comp_powers
+device_power_groups = configurations.device_power_groups
+
+norm_comp_powers= comp_powers / np.linalg.norm(comp_powers)
+norm_trans_powers= trans_powers / np.linalg.norm(trans_powers)
 
 def generate_random_graph(n, m, weight_range=(10,50), comp_rate_range=(1,10)):
     # Create an empty graph
@@ -92,7 +100,33 @@ def draw_graph(G, mesh_network_id):
     graph_name = 'networks/network'+str(mesh_network_id)+'.png'
     plt.savefig(graph_name)
     # plt.show()
-def select_path(G, input_node, output_node):
+def power_details(node_num):
+    comp_power = 0
+    trans_power = 0
+
+    # if node_num <= device_power_groups[0]:
+    #     comp_power = norm_comp_powers[0]
+    #     trans_power = norm_trans_powers[0]
+    # elif node_num > device_power_groups[0] & node_num <= device_power_groups[1]:
+    #     comp_power = norm_comp_powers[1]
+    #     trans_power = norm_trans_powers[1]
+    # else:
+    #     comp_power = norm_comp_powers[2]
+    #     trans_power = norm_trans_powers[2]
+    # print(comp_powers)
+    if node_num <= device_power_groups[0]:
+        comp_power = norm_comp_powers[0]
+        trans_power = norm_trans_powers[0]
+    elif node_num > device_power_groups[0] & node_num <= device_power_groups[1]:
+        comp_power = norm_comp_powers[1]
+        trans_power = norm_trans_powers[1]
+    else:
+        comp_power = norm_comp_powers[2]
+        trans_power = norm_trans_powers[2]
+    
+    return comp_power, trans_power
+
+def select_path(G, input_node, output_node, energy_sensitivity):
     paths = nx.all_simple_paths(G, input_node, output_node)
     selected_path = []
     current_path_weight = 0
@@ -102,9 +136,10 @@ def select_path(G, input_node, output_node):
             u, v = path[i], path[i+1]
             #considering both rate and transmission
             #lets take the highest avarage 
-
-            total_weight += G[u][v]['weight']/5 # the number 5 reduces the influence of the transmission in the selection
-            total_weight += G.nodes[u]['weight']
+            comp_power, trans_power = power_details(u)
+            #for energy the lower the power the better !!
+            total_weight += (G[u][v]['weight']/5) * (1 - ((1 - energy_sensitivity)*trans_power)) # the number 5 reduces the influence of the transmission in the selection
+            total_weight += G.nodes[u]['weight'] * (1 - ((1 - energy_sensitivity)*comp_power))
 
         #amortized cost of the path
         # print(total_weight, len(path))
@@ -117,7 +152,7 @@ def select_path(G, input_node, output_node):
         
     return selected_path[len(selected_path)-1]
 
-def determine_opt_neighbours(G, selected_path, current_max_par_partitions, current_point_on_path):
+def determine_opt_neighbours(G, selected_path, current_max_par_partitions, current_point_on_path, energy_sensitivity):
     selected_point = current_point_on_path
     selected_neighbours_weight = 0
 
@@ -126,10 +161,18 @@ def determine_opt_neighbours(G, selected_path, current_max_par_partitions, curre
 
         neighbours = []
         for n in G.neighbors(p):
-            neighbours.append(G.nodes[n]['weight'])
-            # total_weight += G[n][p]['weight']/5 + G.nodes[n]['weight']
-        neighbours.append(G.nodes[n]['weight'])
 
+            comp_power, trans_power = power_details(n)
+
+            neighbours.append(G.nodes[n]['weight'] * (1-((1 - energy_sensitivity)*comp_power)))
+            # total_weight += G[n][p]['weight']/5 + G.nodes[n]['weight']
+        
+        # was n before !!
+        # neighbours.append(G.nodes[n]['weight'])
+        comp_power, trans_power = power_details(p)
+        neighbours.append(G.nodes[n]['weight'] * (1-((1 - energy_sensitivity)*comp_power)))
+
+        # here!
         #check weights later
 
         if len(neighbours) > current_max_par_partitions:
@@ -148,6 +191,25 @@ def determine_opt_neighbours(G, selected_path, current_max_par_partitions, curre
             selected_neighbours_weight = total_weight
 
     return selected_point
+
+def partition_energy(devices,sub_infer_time,fowrd_trans_time):
+
+    partition_energy = 0
+    for device in devices:
+        comp_power, trans_power = power_details(device)
+        partition_energy += sub_infer_time*comp_power + fowrd_trans_time*trans_power
+
+    return partition_energy
+
+def partition_energy_modified(device_modnn,infer_time_modnn,sub_trans_time):
+
+    partition_energy = 0
+    sub_infer_time = infer_time_modnn - sub_trans_time
+    for device in device_modnn:
+        comp_power, trans_power = power_details(device)
+        partition_energy += sub_infer_time*comp_power + sub_trans_time*trans_power
+
+    return partition_energy
 
 # generate a random graph with 10 nodes and 15 edgespy
 # G = generate_random_graph(10, 15)

@@ -362,7 +362,7 @@ def opt_modnn(in_img, input_index, trans_rate,comp_rate_modnn, model):
                 t_FLs = t_FLs + t_fl
         t = t_CLs + t_FLs
         # print("this is t", t)
-    return output_tensor, t/device_pace_rate
+    return output_tensor, t/device_pace_rate, t_com/device_pace_rate
 
 
 # DeepSlicing
@@ -456,4 +456,4 @@ def opt_deepsclicing(in_img, input_index, trans_rate,pos_max_par_partitions,comp
                 pointer = pointer + 1
         t = t_CLs + t_FLs
         # print("this is t", t)
-    return output_tensor, t/device_pace_rate
+    return output_tensor, t/device_pace_rate, t_com/device_pace_rate
