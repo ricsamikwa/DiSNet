@@ -54,4 +54,16 @@ def find_split_ratio(current_neighbours):
   throughput = sum(trans_rate) / len(trans_rate)
 
   return split_ratio, nodes, throughput
-   
+
+def cap_trans_rate(max_bandwidth,trans_rate):
+  # print("trans_rates ",trans_rate)
+  new_trans_rate = []
+
+  for i in trans_rate:
+    if i > max_bandwidth:
+      new_trans_rate.append(max_bandwidth)
+    else:
+      new_trans_rate.append(i)
+  # print("new_trans_rates ",new_trans_rate)
+
+  return new_trans_rate
