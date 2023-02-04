@@ -76,12 +76,12 @@ for the last layer
 
 ####### params
 
-mesh_network_id = 2 #reserve 0 - 3
-num_runs = 1
+mesh_network_id = 3 #reserve 0 - 3
+num_runs = 100
 num_devices = 10
 num_connections = 15
 
-save_to_file = False
+save_to_file = True
 
 def run_evaluation(max_bandwidth):
 
@@ -124,8 +124,8 @@ def run_evaluation(max_bandwidth):
     ## if needed keep previous input and output nodes 
     # [0:8,4 - num nodes][1:9,7;2,1;2,0;4,5;0,7;1,0][2:0,9;4,1;7,5;6,4;6,1;6,8][3:5,8-acc;6,0;9,2;9,8;6,7;3,5]
     #2: 6, 8 and 8, 4 [ num 8] good example for energy and acc
-    input_node = 8
-    output_node = 4
+    input_node = 5
+    output_node = 8
 
     print('input node : ', input_node)
     print('output node : ', output_node)
@@ -484,7 +484,7 @@ def run_evaluation(max_bandwidth):
 
 ############call main function!
 
-max_bandwidth = [10,20,30,40,50]
+max_bandwidth = [10,15,20,25,30,35,40,45,50]
 run_num = 1
 for i in max_bandwidth:
     print("\n++++++++++++++++++++++++++++++++++++++++++++")
