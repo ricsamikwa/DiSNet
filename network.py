@@ -100,6 +100,22 @@ def draw_graph(G, mesh_network_id):
     graph_name = 'networks/network'+str(mesh_network_id)+'.png'
     plt.savefig(graph_name)
     # plt.show()
+
+def draw_graph_pdf(G, mesh_network_id):
+    # Draw the graph
+    fig = plt.subplots(figsize =(6, 6))
+    plt.rcParams.update({'font.size': 14})
+    pos = nx.spring_layout(G)
+    nodes = nx.draw_networkx_nodes(G, pos, node_size=1200, node_color='white' )
+    nx.draw_networkx_edges(G, pos, edge_color='gray', width=1.0)
+    nx.draw_networkx_edge_labels(G, pos, edge_labels={(u, v): G[u][v]['weight'] for u, v in G.edges()})
+    nx.draw_networkx_labels(G, pos, labels={i: f"{i}:{G.nodes[i]['weight']}\u03B2" for i in G.nodes()})
+    nodes.set_edgecolor('black')
+    plt.tight_layout()
+    fig = plt.gcf()
+    graph_name = 'networks/network'+str(mesh_network_id)+'.pdf'
+    plt.savefig(graph_name)
+
 def power_details(node_num):
     comp_power = 0
     trans_power = 0
