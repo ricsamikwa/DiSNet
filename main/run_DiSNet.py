@@ -34,7 +34,7 @@ input_batch = input_tensor.unsqueeze(0)
 # load model
 model = VGG16()
 model_dict = model.state_dict()
-model_dict.update(torch.load("opt/vgg16-modify.pth"))
+model_dict.update(torch.load("main/vgg16-modify.pth"))
 model.load_state_dict(model_dict)
 model.eval()
 device_pace_rate = configurations.DEVICE_PACE_RATE 
@@ -210,7 +210,7 @@ def run_test(max_bandwidth):
                 print("===================================================")
 
             probabilities = torch.nn.functional.softmax(output[0], dim=0)
-            with open("opt/imagenet_classes.txt", "r") as f:
+            with open("main/imagenet_classes.txt", "r") as f:
                 categories = [s.strip() for s in f.readlines()]
             
             # top categories
@@ -291,7 +291,7 @@ def run_test(max_bandwidth):
                 print("--------------------------------------------------------")
 
 
-            with open("opt/imagenet_classes.txt", "r") as f:
+            with open("main/imagenet_classes.txt", "r") as f:
                 categories = [s.strip() for s in f.readlines()]
             # top categories
             top5_prob, top5_catid = torch.topk(probabilities, 5)

@@ -23,7 +23,8 @@ for name,parameters in Vgg_pretrined.named_parameters():
 
 model_dict = Vgg_pretrined.state_dict()
 print(model_dict.keys())
-    
+
+#update
 model_path = "/home/eric/.cache/torch/hub/checkpoints/vgg16_bn-6c64b313.pth"
 
 dict = torch.load(model_path)
@@ -114,4 +115,4 @@ dict['layer8.weight'] = dict.pop('classifier.6.weight')
 dict['layer8.bias'] = dict.pop('classifier.6.bias')
 
 
-torch.save(dict, 'opt/vgg16-modify.pth')
+torch.save(dict, 'main/vgg16-modify.pth')
