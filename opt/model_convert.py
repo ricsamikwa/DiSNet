@@ -27,7 +27,7 @@ print(model_dict.keys())
 model_path = "/home/eric/.cache/torch/hub/checkpoints/vgg16_bn-6c64b313.pth"
 
 dict = torch.load(model_path)
-# modify parameter name
+
 dict['conv_layers.0.0.weight'] = dict.pop('features.0.weight')
 dict['conv_layers.0.0.bias'] = dict.pop('features.0.bias')
 dict['conv_layers.0.1.weight'] = dict.pop('features.1.weight')

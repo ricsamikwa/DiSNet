@@ -19,7 +19,6 @@ import csv
 
 mesh_network_id = 3 #reserve 0 - 3
 
-#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ## generate mesh network graph with num_devices devices and num_connections connections with random resources and transmission throughput
 # print('Generating random network graph of heterogenous resources (comp, network)')
 # G = generate_random_graph(num_devices, num_connections)
@@ -28,7 +27,6 @@ mesh_network_id = 3 #reserve 0 - 3
 
 # save_graph(G, mesh_network_id) # dump the backup
 
-#                       OR 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 ## reading existing graph
@@ -36,4 +34,4 @@ mesh_network_id = 3 #reserve 0 - 3
 print('Loading existing network graph of heterogenous resources (comp, network)')
 G = read_graph(mesh_network_id)
 
-draw_graph_pdf(G, mesh_network_id) # picture
+draw_graph_pdf(G, mesh_network_id) 

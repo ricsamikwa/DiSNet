@@ -28,7 +28,7 @@ def select_subset(current_neighbours, current_max_par_partitions):
   top_neighbours = sorted_current_neighbours[:current_max_par_partitions]
 
   selected_neighours = []
-  #say unsorted
+
   for i in range(0, len(current_neighbours)):
     if current_neighbours[0][0] == top_neighbours[0][0]:
       selected_neighours.append(current_neighbours[i])
@@ -56,7 +56,7 @@ def find_split_ratio(current_neighbours):
   return split_ratio, nodes, throughput
 
 def cap_trans_rate(max_bandwidth,trans_rate):
-  # print("trans_rates ",trans_rate)
+  
   new_trans_rate = []
 
   for i in trans_rate:
@@ -64,6 +64,7 @@ def cap_trans_rate(max_bandwidth,trans_rate):
       new_trans_rate.append(max_bandwidth)
     else:
       new_trans_rate.append(i)
-  # print("new_trans_rates ",new_trans_rate)
+
 
   return new_trans_rate
+

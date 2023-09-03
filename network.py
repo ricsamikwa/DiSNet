@@ -159,17 +159,13 @@ def select_path(G, input_node, output_node, energy_sensitivity):
         total_weight = 0
         for i in range(len(path) - 1):
             u, v = path[i], path[i+1]
-            #considering both rate and transmission
-            #lets take the highest avarage 
+            #both rate and transmission
             comp_power, trans_power = power_details(u)
-            #for energy the lower the power the better !!
             total_weight += (G[u][v]['weight']/5) * (1 - ((1 - energy_sensitivity)*trans_power)) # the number 5 reduces the influence of the transmission in the selection
             total_weight += G.nodes[u]['weight'] * (1 - ((1 - energy_sensitivity)*comp_power))
 
-        #amortized cost of the path
-        # print(total_weight, len(path))
+        #amortized cost
         total_weight = total_weight/len(path)
-        # print(total_weight)
 
         if total_weight > current_path_weight:
             selected_path.append(path)
@@ -192,18 +188,12 @@ def determine_opt_neighbours(G, selected_path, current_max_par_partitions, curre
             neighbours.append(G.nodes[n]['weight'] * (1-((1 - energy_sensitivity)*comp_power)))
             # total_weight += G[n][p]['weight']/5 + G.nodes[n]['weight']
         
-        # was n before !!
-        # neighbours.append(G.nodes[n]['weight'])
         comp_power, trans_power = power_details(p)
         neighbours.append(G.nodes[n]['weight'] * (1-((1 - energy_sensitivity)*comp_power)))
 
-        # here!
-        #check weights later
 
         if len(neighbours) > current_max_par_partitions:
-            # print("neighbours :", neighbours)
             subset_neighbors = select_subset_neighbours(neighbours, current_max_par_partitions)
-            # print("subset_neighbors :", subset_neighbors)
 
             total_weight = sum(subset_neighbors)/current_max_par_partitions
         else:
@@ -216,6 +206,17 @@ def determine_opt_neighbours(G, selected_path, current_max_par_partitions, curre
             selected_neighbours_weight = total_weight
 
     return selected_point
+def get_throughput_cap():
+    # Network info
+    # HOST2IP = {'pi':'192.168.1.33' , 'nano2':'192.168.1.41', 'nano4':'192.168.1.40' , 'nano6':'192.168.1.42', 'nano8':'192.168.1.43'}
+    # CLIENTS_CONFIG= {'192.168.1.33':0, '192.168.1.41':1, '192.168.1.40':2, '192.168.1.42':3, '192.168.1.43':4}
+    # CLIENTS_LIST= ['192.168.1.33', '192.168.1.41', '192.168.1.40', '192.168.1.42', '192.168.1.43'] 
+    throughput_max = [10,15]
+    ## measurements
+    # 5W trans: 1917.0524958555905
+    # 5W rec: 1912.4423741971912
+
+    return throughput_max 
 
 def partition_energy(devices,sub_infer_time,fowrd_trans_time):
 
@@ -236,13 +237,5 @@ def partition_energy_modified(device_modnn,infer_time_modnn,sub_trans_time):
 
     return partition_energy
 
-# generate a random graph with 10 nodes and 15 edgespy
-# G = generate_random_graph(10, 15)
-# # x = [[G.nodes[n]['weight'] ,G[2][n]['weight'] ] for n in G.neighbors(2)]
-# # print(x)
-# draw_graph(G)
-# print(all_paths_with_weights(G, 0, 9))
-# print(select_path(G, 0, 9))
-# print(shortest_path(G, 0, 9))
 
 

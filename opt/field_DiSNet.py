@@ -2,7 +2,7 @@ import math
 import numpy as np
 
 vgg16 = {
-    'conv1_1': [3, 1, 1], #k, s, p
+    'conv1_1': [3, 1, 1], 
     'conv1_2': [3, 1, 1],
     'pool1': [2, 2, 0],
     'conv2_1': [3, 1, 1],
@@ -24,7 +24,7 @@ vgg16 = {
 
 
 class FieldCalculatorDiSNet:
-    def __init__(self, input_image_size, input_num, output_num, partition_num, split_ratio): #img, start layer, end layer, number of partitions
+    def __init__(self, input_image_size, input_num, output_num, partition_num, split_ratio): 
         super(FieldCalculatorDiSNet, self).__init__()
         self.architecture = vgg16
         self.input_image_size = input_image_size
@@ -35,11 +35,11 @@ class FieldCalculatorDiSNet:
         self.out = ()
         self.i = ()
         layer = -1 #initialising layer to no feasible layer
-        input_layer = ('input_layer', self.input_image_size) #input layer is the input size dimension
-        for key in self.architecture: #looping through the model layers
-            # print(key)
-            layer = layer + 1 # start from layer 0 then upwards
-            if layer < self.input_num: # if layer is less start layer for the partitioning
+        input_layer = ('input_layer', self.input_image_size)
+        for key in self.architecture: # through the model layers
+         
+            layer = layer + 1 # layer 0 upwards
+            if layer < self.input_num: # if layer is less start layer
                 current_layer = self._calculate_layer_output(self.architecture[key], input_layer, key)
                 input_layer = current_layer
             elif layer <= self.output_num:
@@ -91,7 +91,6 @@ class FieldCalculatorDiSNet:
 
         #horizontal split ratio
         split_ratio = self.split_ratio
-        # self.partition_num = 3 #this is temporary
 
         originl_size = self.i[1]
         out_size = self.out[1]
@@ -99,14 +98,14 @@ class FieldCalculatorDiSNet:
         r = self.out[3]
         # print(r,r)
         start = self.out[4]
-        p_num = int(out_size/self.partition_num) #split equal sizes
-        p_renum = int(out_size%self.partition_num) #the remainder after splitting equal sizes
+        p_num = int(out_size/self.partition_num) #equal sizes
+        p_renum = int(out_size%self.partition_num) #the remainder after splitting
 
         partition = []
         p = []
         start_end = []
-        #this loop needs an update
-        for i in range(0, self.partition_num): #looping for each of the partitions
+
+        for i in range(0, self.partition_num): #each of the partitions
             p.append([0, 0]) # add [0,0]  to partition divisions 
             start_end.append([0, 0]) 
             if i < p_renum -1 or i == p_renum -1:
@@ -134,4 +133,3 @@ class FieldCalculatorDiSNet:
         # print(p,partition)
         return p,partition
     
-# ReceptiveFieldCalculator()

@@ -23,7 +23,7 @@ vgg16 = {
 
 
 class FieldCalculator:
-    def __init__(self, input_image_size, input_num, output_num, partition_num): #img, start layer, end layer, number of partitions
+    def __init__(self, input_image_size, input_num, output_num, partition_num): 
         super(FieldCalculator, self).__init__()
         self.architecture = vgg16
         self.input_image_size = input_image_size
@@ -33,11 +33,11 @@ class FieldCalculator:
         self.out = ()
         self.i = ()
         layer = -1 #initialising layer to no feasible layer
-        input_layer = ('input_layer', self.input_image_size) #input layer is the input size dimension
-        for key in self.architecture: #looping through the model layers
-            # print(key)
-            layer = layer + 1 # start from layer 0 then upwards
-            if layer < self.input_num: # if layer is less start layer for the partitioning
+        input_layer = ('input_layer', self.input_image_size) 
+        for key in self.architecture: #through the model layers
+      
+            layer = layer + 1 
+            if layer < self.input_num: 
                 current_layer = self._calculate_layer_output(self.architecture[key], input_layer, key)
                 input_layer = current_layer
             elif layer <= self.output_num:
@@ -95,14 +95,14 @@ class FieldCalculator:
         jump = self.out[2]
         r = self.out[3]
         start = self.out[4]
-        p_num = int(out_size/self.partition_num) #split equal sizes
+        p_num = int(out_size/self.partition_num) #equal sizes
         p_renum = int(out_size%self.partition_num) #the remainder after splitting equal sizes
 
         partition = []
         p = []
         start_end = []
         #this loop needs an update
-        for i in range(0, self.partition_num): #looping for each of the partitions
+        for i in range(0, self.partition_num): #each of the partitions
             p.append([0, 0]) # add [0,0]  to partition divisions 
             start_end.append([0, 0]) 
             if i < p_renum -1 or i == p_renum -1:
@@ -127,5 +127,3 @@ class FieldCalculator:
                 p[i]= [0,0]
         # print(p,partition)
         return p,partition
-    
-# ReceptiveFieldCalculator()
