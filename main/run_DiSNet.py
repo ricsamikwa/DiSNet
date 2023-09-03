@@ -31,7 +31,6 @@ preprocess = transforms.Compose([
 input_tensor = preprocess(input_image)
 input_batch = input_tensor.unsqueeze(0)
 
-# load model
 model = VGG16()
 model_dict = model.state_dict()
 model_dict.update(torch.load("main/vgg16-modify.pth"))
@@ -45,7 +44,7 @@ if torch.cuda.is_available():
     model.to('cuda:0')
 
 
-mesh_network_id = 0 # 0 - 3
+mesh_network_id = 0 # pos 0 - 3
 num_runs = 1
 num_devices = 10
 num_connections = 15
@@ -72,7 +71,7 @@ def run_test(max_bandwidth):
 
     max_par_partitions = configurations.max_par_partitions 
 
-    #different random input and output pairs
+    # random input and output node pairs
     while True:
         input_node = random.randint(0, num_devices -1)
         output_node = random.randint(0, num_devices -1)
@@ -100,8 +99,8 @@ def run_test(max_bandwidth):
     current_point_on_path = 0
     split_ratio = []
     devices = []
-    trans_rate_forward = [] # take the transrate between node p and p+1
-    par_trans_rate = [] # take from the devices mesh graph the neighbourhood average 
+    trans_rate_forward = [] # transimission rate node p and p+1
+    par_trans_rate = [] # neighbourhood average from devices mesh graph
     execution_path = []
 
     for i in range(0, len(max_par_partitions)):
@@ -226,7 +225,7 @@ def run_test(max_bandwidth):
        
 
 
-    print('-------------------------modnn---------------------------')
+    print('-------------------------Modnn---------------------------')
 
 
     modnn_devices = []
@@ -271,8 +270,6 @@ def run_test(max_bandwidth):
 
     for i in range(0, num_runs):
         infer_time_modnn = 0
-        infer_accurancy = 0
-        top5_accurancy =0
         infer_energy = 0
         
         with torch.no_grad():
@@ -300,8 +297,6 @@ def run_test(max_bandwidth):
                     print(categories[top5_catid[k]], top5_prob[k].item()) 
                 print("--------------------------------------------------------")
             
-            infer_accurancy = top5_prob[0].item()
-            top5_accurancy = sum(top5_prob).item()
             if i == 0:
                 print('top 5 acc: ',sum(top5_prob).item())
       
