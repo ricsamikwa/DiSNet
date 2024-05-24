@@ -1,4 +1,4 @@
-# DISNET: Distributed Micro-Split Deep Learning in Heterogeneous Dynamic IoT
+# DISNET: Distributed Micro-Split Deep Learning in Heterogeneous Dynamic Edge Devices
 ### MICRO-SPLIT DEEP LEARNING
 Distributed micro-split deep learning enables flexible partitioning and distributed computing of deep neural networks in heterogeneous dynamic IoT for low-latency and energy-efficient cooperative Deep Learning operations. DISNET iteratively combines vertical (layerwise) and horizontal DNN partitioning for flexible, distributed, and parallel execution of neural network models in IoT systems with heterogeneous computing capabilities and network conditions without compromising accuracy.
 
@@ -29,4 +29,18 @@ Run the file `run_DiSNet.py` to test the inference time, energy consumption, and
 
 ```
 python3 main/run_DiSNet.py
+```
+Paper: https://doi.org/10.1109/JIOT.2023.3313514
+
+## Citation
+
+Please cite the paper as follows: Samikwa, Eric, Antonio Di Maio, and Torsten Braun. "DISNET: Distributed Micro-Split Deep Learning in Heterogeneous Dynamic IoT."  IEEE Internet of Things journal (2023). 
+```
+@article{samikwa2023disnet,
+  title={Disnet: Distributed micro-split deep learning in heterogeneous dynamic iot},
+  author={Samikwa, Eric and Di Maio, Antonio and Braun, Torsten},
+  journal={IEEE Internet of Things journal},
+  year={2023},
+  publisher={IEEE}
+}
 ```
